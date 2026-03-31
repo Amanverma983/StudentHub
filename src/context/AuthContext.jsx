@@ -46,7 +46,11 @@ export function AuthProvider({ children }) {
       toast.success('Signed in successfully');
       return { user: data.user, error: null };
     } catch (err) {
-      toast.error(err.message);
+      if (err.message.toLowerCase().includes('email not confirmed')) {
+        toast.error('Please verify your email address before signing in.');
+      } else {
+        toast.error(err.message);
+      }
       return { user: null, error: err.message };
     } finally {
       setLoading(false);

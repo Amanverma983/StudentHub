@@ -4,6 +4,12 @@ import { Toaster } from 'react-hot-toast';
 import Script from 'next/script';
 import '@/styles/globals.css';
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata = {
   title: {
     default: 'StudentHub — The All-in-One Student Career Platform',
@@ -36,11 +42,6 @@ export const metadata = {
     index: true,
     follow: true,
     googleBot: { index: true, follow: true },
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
   },
 };
 
