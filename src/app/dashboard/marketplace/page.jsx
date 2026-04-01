@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Filter, Clock, Users, Zap, X, Plus,
   ChevronDown, Briefcase, BookOpen, AlertCircle, Check,
-  IndianRupee, Calendar, Tag, Paperclip, FileText,
+  IndianRupee, Calendar, Tag, Paperclip, FileText, MapPin,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 
 // GIG CARD
 function GigCard({ gig, onApply, hasApplied, isWriter }) {
+  const { user } = useAuth();
   const urgencyConfig = {
     express: { label: 'Express', class: 'bg-red-500/15 border-red-500/25 text-red-400' },
     urgent: { label: 'Urgent', class: 'bg-gold-500/15 border-gold-500/25 text-gold-400' },
@@ -69,6 +70,19 @@ function GigCard({ gig, onApply, hasApplied, isWriter }) {
           </div>
           <p className="text-xs text-ink-muted leading-relaxed line-clamp-3 italic">
             "{gig.question}"
+          </p>
+        </div>
+      )}
+
+      {/* Delivery Address (Secret) */}
+      {(user?.id === gig.customer_id || user?.id === gig.assigned_to) && gig.delivery_address && (
+        <div className="bg-gold-500/5 border border-gold-500/20 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin size={13} className="text-gold-400" />
+            <span className="text-[10px] font-semibold text-gold-400 uppercase tracking-wider">Delivery Destination</span>
+          </div>
+          <p className="text-xs text-ink-muted leading-relaxed">
+            {gig.delivery_address}
           </p>
         </div>
       )}
@@ -136,7 +150,8 @@ function PostGigModal({ onClose, onSubmit }) {
     urgency: 'standard',
     deadline: '',
     question: '',
-    attachment: null, // This will be the File object
+    delivery_address: '', // New Field
+    attachment: null,
   });
   const [loading, setLoading] = useState(false);
 
@@ -166,8 +181,8 @@ function PostGigModal({ onClose, onSubmit }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.subject || !form.description || !form.deadline) {
-      toast.error('Please fill all required fields');
+    if (!form.title || !form.subject || !form.description || !form.deadline || !form.delivery_address) {
+      toast.error('Please fill all required fields (including address)');
       return;
     }
 
@@ -245,18 +260,14 @@ function PostGigModal({ onClose, onSubmit }) {
 
           {/* Subject */}
           <div>
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-widest mb-2">Subject</label>
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-widest mb-2">Subject Name</label>
             <input
-              list="subject-suggestions"
               className="input-field"
-              placeholder="e.g. Mathematics, Organic Chemistry, etc."
+              placeholder="Type Subject (e.g. Mathematics, OS, etc.)"
               value={form.subject}
               onChange={e => handleChange('subject', e.target.value)}
               required
             />
-            <datalist id="subject-suggestions">
-              {SUBJECTS.map(s => <option key={s} value={s} />)}
-            </datalist>
           </div>
 
           {/* Description */}
@@ -272,15 +283,31 @@ function PostGigModal({ onClose, onSubmit }) {
             />
           </div>
 
-          {/* Specific Question */}
+          {/* Specific Question / Content */}
           <div>
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-widest mb-2">Specific Assignment Question</label>
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-widest mb-2">Specific Assignment Quest/Detail</label>
             <textarea
               className="input-field resize-none border-dashed border-violet-500/30 bg-violet-500/5 focus:bg-violet-500/10"
               rows={4}
-              placeholder="Paste the exact question or prompt here..."
+              placeholder="Paste your questions or exact request here..."
               value={form.question}
               onChange={e => handleChange('question', e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Delivery Address */}
+          <div>
+            <label className="block text-xs font-semibold text-link-muted uppercase tracking-widest mb-2 flex items-center gap-2">
+              <MapPin size={13} className="text-violet-400" />
+              Delivery Address (Visible only to assigned writer)
+            </label>
+            <textarea
+              className="input-field resize-none bg-gold-400/5 focus:bg-gold-400/10"
+              rows={3}
+              placeholder="Enter complete address for handwritten assignment delivery..."
+              value={form.delivery_address}
+              onChange={e => handleChange('delivery_address', e.target.value)}
               required
             />
           </div>

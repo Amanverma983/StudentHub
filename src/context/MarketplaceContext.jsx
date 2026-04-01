@@ -62,6 +62,7 @@ export function MarketplaceProvider({ children }) {
           tags: [gigData.subject, ...(gigData.attachment ? ['📎 Attachment'] : [])],
           question: gigData.question,
           attachment_url: gigData.attachment_url || null,
+          delivery_address: gigData.delivery_address,
         }])
         .select()
         .single();
