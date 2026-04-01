@@ -116,8 +116,12 @@ function GlassmorphismPreview({ data }) {
 
       {/* Hero */}
       <div style={{ position: 'relative', textAlign: 'center', marginBottom: '24px' }}>
-        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #4C1D95)', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 0 30px rgba(124,58,237,0.4)' }}>
-          {data.name[0]}
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.2)', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 0 30px rgba(124,58,237,0.4)', overflow: 'hidden' }}>
+          {data.avatar ? (
+            <img src={data.avatar} alt={data.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
+          ) : (
+            data.name[0]
+          )}
         </div>
         <h1 style={{ color: '#F8F8FF', fontSize: '22px', fontWeight: '700', margin: '0 0 4px' }}>{data.name}</h1>
         <p style={{ color: '#8B5CF6', fontSize: '13px', margin: '0 0 8px' }}>{data.title}</p>
@@ -204,7 +208,13 @@ function BentoPreview({ data }) {
       </div>
       {/* Avatar/location */}
       <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#0A0A14', fontWeight: 'bold', marginBottom: '8px' }}>{data.name[0]}</div>
+        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#F59E0B', fontWeight: 'bold', marginBottom: '8px', overflow: 'hidden' }}>
+          {data.avatar ? (
+            <img src={data.avatar} alt={data.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
+          ) : (
+            data.name[0]
+          )}
+        </div>
         <div style={{ fontSize: '10px', color: '#9BA3B5', fontFamily: 'system-ui', textAlign: 'center' }}>📍 {data.location}</div>
       </div>
       {/* Bio - spans full width */}
@@ -236,7 +246,13 @@ function NeonPreview({ data }) {
   return (
     <div style={{ background: '#050010', padding: '28px 24px', fontFamily: 'system-ui', minHeight: '500px' }}>
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'transparent', border: '2px solid #FF0099', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', color: '#FF0099', boxShadow: '0 0 20px #FF0099, 0 0 40px rgba(255,0,153,0.3)' }}>{data.name[0]}</div>
+        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'transparent', border: '2px solid #FF0099', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', color: '#FF0099', boxShadow: '0 0 20px #FF0099, 0 0 40px rgba(255,0,153,0.3)', overflow: 'hidden' }}>
+          {data.avatar ? (
+            <img src={data.avatar} alt={data.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
+          ) : (
+            data.name[0]
+          )}
+        </div>
         <h1 style={{ color: '#FF0099', fontSize: '22px', fontWeight: '700', margin: '0 0 4px', textShadow: '0 0 20px rgba(255,0,153,0.8)' }}>{data.name}</h1>
         <p style={{ color: '#00FFFF', fontSize: '12px', margin: '0 0 6px', textShadow: '0 0 10px rgba(0,255,255,0.6)' }}>{data.title}</p>
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>{data.tagline}</p>
@@ -265,7 +281,13 @@ function Glass3DPreview({ data }) {
         style={{ transformStyle: 'preserve-3d', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '24px', padding: '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
       >
         <div style={{ transform: 'translateZ(40px)', textAlign: 'center', marginBottom: '20px' }}>
-          <div style={{ width: '70px', height: '70px', borderRadius: '20px', background: 'white', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>{data.name[0]}</div>
+          <div style={{ width: '70px', height: '70px', borderRadius: '20px', background: 'white', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.5)' }}>
+            {data.avatar ? (
+              <img src={data.avatar} alt={data.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
+            ) : (
+              data.name[0]
+            )}
+          </div>
           <h1 style={{ color: 'white', fontSize: '24px', fontWeight: '800', marginBottom: '4px' }}>{data.name}</h1>
           <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>{data.title}</p>
         </div>
