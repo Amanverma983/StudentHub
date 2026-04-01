@@ -3,6 +3,7 @@ import { MarketplaceProvider } from '@/context/MarketplaceContext';
 import { Toaster } from 'react-hot-toast';
 import Script from 'next/script';
 import '@/styles/globals.css';
+import LegalFooter from '@/components/ui/LegalFooter';
 
 export const viewport = {
   width: 'device-width',
@@ -61,6 +62,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <MarketplaceProvider>
             {children}
+            <LegalFooter />
             <Toaster
               position="bottom-right"
               toastOptions={{
