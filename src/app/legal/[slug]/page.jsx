@@ -68,7 +68,7 @@ const LEGAL_CONTENT = {
       Have questions or need help? Reach out to our support team.
 
       ### 📧 Email
-      support@studenthub.in (or your primary email)
+      av5324534@gmail.com
 
       ### 📍 Office
       Brand owned by Aman Verma. Registered in India to provide student career services.
