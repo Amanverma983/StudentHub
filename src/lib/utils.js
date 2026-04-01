@@ -64,9 +64,9 @@ export const SUBJECTS = [
 ];
 
 export const RATES = {
-  standard: 5,
-  urgent: 10,
-  express: 15,
+  standard: 15,
+  urgent: 20,
+  express: 25,
 };
 
 export const DELIVERY_RATES = {
