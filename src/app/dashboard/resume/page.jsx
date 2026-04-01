@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, Download, Eye, ChevronDown, ChevronUp,
   FileText, Briefcase, GraduationCap, Award, Code,
-  Phone, Mail, MapPin, Linkedin, Globe, Check, Zap,
+  Phone, Mail, MapPin, Linkedin, Globe, Check, Zap, X,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';

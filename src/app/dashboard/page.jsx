@@ -7,7 +7,7 @@ import {
   TrendingUp, Briefcase, Star, Clock, ArrowRight,
   Zap, PenTool, FileText, Globe, ChevronRight,
   IndianRupee, CheckCircle, Timer, Award, Check,
-  X, Truck, Paperclip, MapPin, ExternalLink
+  X, Truck, Paperclip, MapPin, ExternalLink, Users
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
