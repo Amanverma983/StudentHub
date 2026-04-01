@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase';
 import { initializeRazorpayPayment } from '@/lib/payments';
 import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
+import UPIPaymentModal from '@/components/marketplace/UPIPaymentModal';
 
 // GIG CARD
 function GigCard({ gig, onApply, hasApplied, isWriter }) {
@@ -155,6 +156,7 @@ function PostGigModal({ onClose, onSubmit }) {
     attachment: null,
   });
   const [loading, setLoading] = useState(false);
+  const [showUPIModal, setShowUPIModal] = useState(false);
 
   const pricing = calculateGigPrice(form.pages, form.urgency, form.delivery_type);
 
@@ -189,32 +191,39 @@ function PostGigModal({ onClose, onSubmit }) {
 
     setLoading(true);
     try {
-      // 1. Process Payment First
-      await initializeRazorpayPayment({
-        amount: pricing.total,
-        name: user.name,
-        email: user.email,
-        description: `Assignment: ${form.title}`,
-      });
+      // 1. Trigger UPI Payment Modal
+      setShowUPIModal(true);
+      setLoading(false); // Stop main loading, modal will handle next steps
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to initiate payment');
+      setLoading(false);
+    }
+  };
 
-      // 2. Upload File if exists
+  const handlePaymentSuccess = async (proofUrl, transactionId) => {
+    setLoading(true);
+    try {
+      // 2. Upload Assignment File if exists (Logic moved here)
       let attachmentUrl = null;
       if (form.attachment instanceof File) {
         attachmentUrl = await handleUpload(form.attachment);
       }
 
-      // 3. Post to Database
+      // 3. Post to Database with Payment Info
       await onSubmit({ 
         ...form, 
         price: pricing.total, 
         attachment_url: attachmentUrl,
-        delivery_type: form.delivery_type
+        delivery_type: form.delivery_type,
+        payment_proof_url: proofUrl,
+        transaction_id: transactionId
       });
 
+      setShowUPIModal(false);
       onClose();
     } catch (err) {
-      console.error(err);
-      toast.error(err.message || 'Payment failed or cancelled');
+      toast.error('Submission failed after payment');
     } finally {
       setLoading(false);
     }
@@ -492,6 +501,18 @@ function PostGigModal({ onClose, onSubmit }) {
           </p>
         </form>
       </motion.div>
+
+      {/* UPI Payment Modal Integration */}
+      <AnimatePresence>
+        {showUPIModal && (
+          <UPIPaymentModal
+            amount={pricing.total}
+            gigTitle={form.title}
+            onClose={() => setShowUPIModal(false)}
+            onPaymentComplete={handlePaymentSuccess}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

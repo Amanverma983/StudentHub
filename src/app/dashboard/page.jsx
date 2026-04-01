@@ -7,7 +7,8 @@ import {
   TrendingUp, Briefcase, Star, Clock, ArrowRight,
   Zap, PenTool, FileText, Globe, ChevronRight,
   IndianRupee, CheckCircle, Timer, Award, Check,
-  X, Truck, Paperclip, MapPin, ExternalLink, Users
+  X, Truck, Paperclip, MapPin, ExternalLink, Users,
+  ShieldCheck, AlertTriangle, Eye, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
@@ -266,10 +267,11 @@ function CustomerDashboard({ user }) {
                     <div className="flex items-center gap-3">
                       <span className="text-[10px] text-ink-muted uppercase font-bold tracking-wider">{gig.subject}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter ${
+                        gig.payment_status === 'pending_verification' ? 'bg-amber-500/15 text-amber-500 animate-pulse' :
                         gig.status === 'open' ? 'bg-violet-500/15 text-violet-400' :
                         gig.status === 'in-progress' ? 'bg-gold-500/15 text-gold-400 font-black' :
                         'bg-emerald-500/15 text-emerald-400'
-                      }`}>{gig.status}</span>
+                      }`}>{gig.payment_status === 'pending_verification' ? 'Verifying Payment' : gig.status}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
@@ -371,8 +373,103 @@ function CustomerDashboard({ user }) {
   );
 }
 
+function AdminDashboard({ user }) {
+  const { gigs, verifyGigPayment } = useMarketplace();
+  const pendingPayments = gigs.filter(g => g.payment_status === 'pending_verification');
+  const [selectedProof, setSelectedProof] = useState(null);
+
+  const stats = [
+    { label: 'Pending Verifications', value: pendingPayments.length, icon: AlertTriangle, color: 'text-gold-400', bg: 'bg-gold-500/10' },
+    { label: 'Total Gigs', value: gigs.length, icon: Briefcase, color: 'text-violet-400', bg: 'bg-violet-500/10' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-800 text-ink tracking-tight">Admin <span className="text-violet-500">Panel</span></h1>
+          <p className="text-sm text-ink-muted">Verify incoming UPI manual payments</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {stats.map(stat => (
+          <div key={stat.label} className="stat-card border border-glass-border">
+            <div className={`w-9 h-9 rounded-xl ${stat.bg} flex items-center justify-center mb-3`}>
+              <stat.icon size={17} className={stat.color} />
+            </div>
+            <div className={`font-display text-2xl font-800 mb-1 ${stat.color}`}>{stat.value}</div>
+            <p className="text-xs text-ink-muted">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Verification Queue */}
+      <div className="glass-card rounded-3xl p-6 border border-glass-border">
+        <h2 className="font-display font-600 text-ink mb-6 flex items-center gap-2">
+          <ShieldCheck size={20} className="text-emerald-400" />
+          Verification Queue
+        </h2>
+
+        {pendingPayments.length === 0 ? (
+          <div className="py-12 text-center bg-void/20 rounded-2xl border border-dashed border-glass-border">
+            <div className="w-12 h-12 rounded-full bg-glass flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={24} className="text-ink-subtle" />
+            </div>
+            <p className="text-ink-muted text-sm font-medium">All caught up! No pending payments.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {pendingPayments.map(gig => (
+              <div key={gig.id} className="p-5 rounded-2xl bg-void/40 border border-glass-border flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-violet-400 bg-violet-400/10 px-2 py-0.5 rounded">ID: {gig.id.slice(0,8)}</span>
+                    <span className="text-[10px] font-bold text-ink-subtle italic">{timeAgo(gig.created_at)}</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-ink mb-1">{gig.title}</h3>
+                  <p className="text-xs text-ink-muted">Amount: <span className="text-gold-400 font-bold">₹{gig.price}</span> • Transaction: <span className="text-ink font-mono">{gig.transaction_id || 'N/A'}</span></p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {gig.payment_proof_url && (
+                    <Button variant="secondary" size="sm" className="gap-2" onClick={() => setSelectedProof(gig.payment_proof_url)}>
+                      <Eye size={14} /> View Proof
+                    </Button>
+                  )}
+                  <Button variant="gold" size="sm" className="bg-emerald-600 hover:bg-emerald-500 border-none gap-2" onClick={() => verifyGigPayment(gig.id, 'paid')}>
+                    <ThumbsUp size={14} /> Approve
+                  </Button>
+                  <Button variant="secondary" size="sm" className="text-red-400 border-red-500/20 hover:bg-red-500/10 gap-2" onClick={() => verifyGigPayment(gig.id, 'rejected')}>
+                    <ThumbsDown size={14} /> Reject
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Proof Modal */}
+      <AnimatePresence>
+        {selectedProof && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-void/90 backdrop-blur-md" onClick={() => setSelectedProof(null)} />
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="relative max-w-2xl w-full glass-card rounded-[2.5rem] p-4 border border-glass-border">
+              <button onClick={() => setSelectedProof(null)} className="absolute -top-4 -right-4 p-3 rounded-full bg-violet-600 text-white shadow-xl z-20"><X size={20} /></button>
+              <img src={selectedProof} alt="Payment Proof" className="w-full h-auto rounded-3xl" />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
-  const { user, isWriter } = useAuth();
+  const { user, profile, isWriter, isAdmin } = useAuth();
   if (!user) return null;
-  return isWriter ? <WriterDashboard user={user} /> : <CustomerDashboard user={user} />;
+  
+  if (isAdmin) return <AdminDashboard user={profile} />;
+  return isWriter ? <WriterDashboard user={profile} /> : <CustomerDashboard user={profile} />;
 }

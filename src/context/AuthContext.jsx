@@ -110,6 +110,7 @@ export function AuthProvider({ children }) {
       error,
       isWriter: profile?.role === 'writer',
       isCustomer: profile?.role === 'customer',
+      isAdmin: !!profile?.is_admin,
       isAuthenticated: !!user,
       signIn,
       signUp,

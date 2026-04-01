@@ -64,19 +64,65 @@ export function MarketplaceProvider({ children }) {
           attachment_url: gigData.attachment_url || null,
           delivery_address: gigData.delivery_address,
           delivery_type: gigData.delivery_type || 'national',
+          payment_status: 'pending_verification', // New field
+          payment_proof_url: gigData.payment_proof_url || null, // New field
+          transaction_id: gigData.transaction_id || null, // New field
         }])
         .select()
         .single();
 
       if (error) throw error;
       
-      toast.success('Assignment posted successfully!');
-      fetchGigs(); // Refresh list
+      toast.success('Assignment submitted for verification!');
+      fetchGigs();
       return data;
     } catch (err) {
       toast.error('Failed to post assignment');
       console.error(err);
       return null;
+    }
+  }, [fetchGigs]);
+
+  const uploadPaymentProof = async (file) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `proofs/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('payments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('payments')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (err) {
+      console.error('Error uploading proof:', err);
+      toast.error('Failed to upload screenshot');
+      return null;
+    }
+  };
+
+  const verifyGigPayment = useCallback(async (gigId, status = 'paid') => {
+    try {
+      const { error } = await supabase
+        .from('gigs')
+        .update({ 
+          payment_status: status,
+          status: status === 'paid' ? 'open' : 'rejected' 
+        })
+        .eq('id', gigId);
+
+      if (error) throw error;
+      
+      toast.success(status === 'paid' ? 'Payment Verified! Gig is now live.' : 'Payment Rejected.');
+      fetchGigs();
+    } catch (err) {
+      toast.error('Verification failed');
     }
   }, [fetchGigs]);
 
@@ -225,6 +271,9 @@ export function MarketplaceProvider({ children }) {
   }, [gigs]);
 
   const filteredGigs = gigs.filter(g => {
+    // Only show "Verified & Paid" gigs to writers, unless filtering for specific status
+    if (filter.status === 'open' && g.payment_status !== 'paid') return false;
+    
     if (filter.subject !== 'all' && g.subject !== filter.subject) return false;
     if (filter.urgency !== 'all' && g.urgency !== filter.urgency) return false;
     if (filter.status !== 'all' && g.status !== filter.status) return false;
@@ -239,6 +288,8 @@ export function MarketplaceProvider({ children }) {
       filter,
       setFilter,
       postGig,
+      uploadPaymentProof,
+      verifyGigPayment,
       applyToGig,
       assignWriter,
       submitDelivery,
