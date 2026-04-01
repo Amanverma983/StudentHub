@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Globe, Palette, Eye, Check, Plus, Trash2, ExternalLink,
+import { Globe, Palette, Eye, Check, Plus, Trash2, ExternalLink,
   Github, Twitter, Linkedin, Mail, Code, Layers, Cpu,
-  ChevronDown, ChevronUp, Monitor, Smartphone,
+  ChevronDown, ChevronUp, Monitor, Smartphone, Lock, Sparkles,
+  Diamond, CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
+import { createClient } from '@/lib/supabase';
+import { initializeRazorpayPayment } from '@/lib/payments';
+import toast from 'react-hot-toast';
 
 const THEMES = [
   {
@@ -49,6 +52,30 @@ const THEMES = [
       bg: 'linear-gradient(135deg, #050010 0%, #100020 100%)',
       accent: '#FF0099',
       glow: 'rgba(255,0,153,0.3)',
+    },
+  },
+  {
+    id: '3d-glass',
+    name: '3D Modern Glass',
+    desc: 'Premium depth with glass cards',
+    premium: true,
+    price: 299,
+    preview: {
+      bg: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+      accent: '#FFFFFF',
+      glow: 'rgba(255,255,255,0.4)',
+    },
+  },
+  {
+    id: '3d-cyber',
+    name: '3D Cyber Neon',
+    desc: 'Glowing 3D cyberpunk grid',
+    premium: true,
+    price: 299,
+    preview: {
+      bg: 'linear-gradient(135deg, #000 0%, #050510 100%)',
+      accent: '#00FFFF',
+      glow: 'rgba(0,255,255,0.5)',
     },
   },
 ];
@@ -229,11 +256,60 @@ function NeonPreview({ data }) {
   );
 }
 
+function Glass3DPreview({ data }) {
+  return (
+    <div style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)', padding: '32px 24px', minHeight: '550px', perspective: '1000px', overflow: 'hidden' }}>
+      <motion.div 
+        initial={{ rotateX: 15, y: 20, opacity: 0 }}
+        animate={{ rotateX: 5, y: 0, opacity: 1 }}
+        style={{ transformStyle: 'preserve-3d', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '24px', padding: '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
+      >
+        <div style={{ transform: 'translateZ(40px)', textAlign: 'center', marginBottom: '20px' }}>
+          <div style={{ width: '70px', height: '70px', borderRadius: '20px', background: 'white', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>{data.name[0]}</div>
+          <h1 style={{ color: 'white', fontSize: '24px', fontWeight: '800', marginBottom: '4px' }}>{data.name}</h1>
+          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>{data.title}</p>
+        </div>
+        <div style={{ transform: 'translateZ(20px)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          {data.stats.slice(0, 2).map((s, i) => (
+            <div key={i} style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ color: 'white', fontSize: '18px', fontWeight: 'bold' }}>{s.value}</div>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '9px' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function Cyber3DPreview({ data }) {
+  return (
+    <div style={{ background: '#000', padding: '32px 24px', minHeight: '550px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)', backgroundSize: '30px 30px', transform: 'perspective(500px) rotateX(60deg) translateY(-100px)', opacity: 0.3 }} />
+      <motion.div 
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ position: 'relative', background: 'rgba(0,255,255,0.05)', border: '2px solid #00FFFF', borderRadius: '4px', padding: '24px', boxShadow: '0 0 20px rgba(0,255,255,0.2), inset 0 0 20px rgba(0,255,255,0.1)' }}
+      >
+        <h1 style={{ color: '#00FFFF', fontSize: '28px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px', textShadow: '0 0 10px #00FFFF' }}>{data.name}</h1>
+        <p style={{ color: '#FF0099', fontSize: '14px', fontWeight: '600', marginBottom: '20px' }}>// {data.title}</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {data.skills.slice(0, 5).map((s, i) => (
+            <span key={i} style={{ background: 'transparent', border: '1px solid #FF0099', color: '#FF0099', padding: '4px 12px', fontSize: '10px', textTransform: 'uppercase' }}>{s}</span>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 const PREVIEW_COMPONENTS = {
   glassmorphism: GlassmorphismPreview,
   terminal: TerminalPreview,
   bento: BentoPreview,
   neon: NeonPreview,
+  '3d-glass': Glass3DPreview,
+  '3d-cyber': Cyber3DPreview,
 };
 
 function Section({ title, icon: Icon, children, defaultOpen = true }) {
@@ -275,6 +351,74 @@ export default function PortfolioPage() {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
   const [newSkill, setNewSkill] = useState('');
+  const [unlockedThemes, setUnlockedThemes] = useState(user?.unlocked_themes || []);
+  const [unlocking, setUnlocking] = useState(false);
+
+  // Sync unlocked themes when user data loads
+  useEffect(() => {
+    if (user?.unlocked_themes) {
+      setUnlockedThemes(user.unlocked_themes);
+    }
+  }, [user]);
+
+  const supabase = createClient();
+
+  const handleUnlockTheme = async (themeId, price) => {
+    setUnlocking(true);
+    try {
+      const paymentId = await initializeRazorpayPayment({
+        amount: price * 100,
+        name: 'Portfolio Template Unlock',
+        email: user.email,
+        description: `Unlock ${themeId} Premium Template`,
+      });
+
+      if (paymentId) {
+        const newUnlocked = [...unlockedThemes, themeId];
+        const { error } = await supabase
+          .from('profiles')
+          .update({ unlocked_themes: newUnlocked })
+          .eq('id', user.id);
+
+        if (error) throw error;
+        setUnlockedThemes(newUnlocked);
+        setTheme(themeId);
+        toast.success(`${themeId} unlocked!`);
+      }
+    } catch (err) {
+      toast.error('Payment failed or cancelled');
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const handleUnlockBundle = async () => {
+    setUnlocking(true);
+    try {
+      const paymentId = await initializeRazorpayPayment({
+        amount: 499 * 100,
+        name: '3D Template Bundle',
+        email: user.email,
+        description: 'Unlock ALL Premium 3D Templates',
+      });
+
+      if (paymentId) {
+        const newUnlocked = [...unlockedThemes, '3d-glass', '3d-cyber'];
+        const { error } = await supabase
+          .from('profiles')
+          .update({ unlocked_themes: newUnlocked })
+          .eq('id', user.id);
+
+        if (error) throw error;
+        setUnlockedThemes(newUnlocked);
+        toast.success('3D Bundle unlocked! 🎉');
+      }
+    } catch (err) {
+      toast.error('Payment failed');
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const update = (field, value) => setData(prev => ({ ...prev, [field]: value }));
 
@@ -331,38 +475,56 @@ export default function PortfolioPage() {
 
       {/* Theme Selector */}
       <div className="glass-card rounded-2xl p-4">
-        <p className="text-xs font-semibold text-ink-muted uppercase tracking-widest mb-4">
-          <Palette size={12} className="inline mr-1.5" />
-          Choose Theme
-        </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {THEMES.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTheme(t.id)}
-              className={`p-3 rounded-xl border transition-all text-left ${
-                theme === t.id ? 'border-violet-500/50 bg-violet-500/10' : 'border-glass-border hover:border-violet-500/25'
-              }`}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-semibold text-ink-muted uppercase tracking-widest flex items-center">
+            <Palette size={12} className="mr-1.5" />
+            Choose Theme
+          </p>
+          {(!unlockedThemes.includes('3d-glass') || !unlockedThemes.includes('3d-cyber')) && (
+            <button 
+              onClick={handleUnlockBundle}
+              className="text-[10px] font-bold text-gold-400 bg-gold-400/10 px-3 py-1 rounded-lg border border-gold-400/20 hover:bg-gold-400/20 transition-all flex items-center gap-1.5"
             >
-              <div
-                className="w-full h-10 rounded-lg mb-2 relative overflow-hidden"
-                style={{ background: t.preview.bg, boxShadow: theme === t.id ? `0 0 20px ${t.preview.glow}` : 'none' }}
-              >
-                <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: t.preview.accent }} />
-                <div className="absolute top-2 left-2 w-4 h-1 rounded" style={{ background: t.preview.accent, opacity: 0.8 }} />
-                <div className="absolute top-4 left-2 w-8 h-0.5 rounded bg-white opacity-20" />
-                <div className="absolute top-6 left-2 w-6 h-0.5 rounded bg-white opacity-10" />
-              </div>
-              <p className="text-xs font-display font-600 text-ink">{t.name}</p>
-              <p className="text-[10px] text-ink-subtle mt-0.5">{t.desc}</p>
-              {theme === t.id && (
-                <div className="flex items-center gap-1 mt-1">
-                  <Check size={9} className="text-violet-400" />
-                  <span className="text-[10px] text-violet-400">Active</span>
-                </div>
-              )}
+              <Sparkles size={10} />
+              Unlock 3D Bundle (₹499)
             </button>
-          ))}
+          )}
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+          {THEMES.map(t => {
+            const isLocked = t.premium && !unlockedThemes.includes(t.id);
+            return (
+              <button
+                key={t.id}
+                onClick={() => isLocked ? handleUnlockTheme(t.id, t.price) : setTheme(t.id)}
+                disabled={unlocking}
+                className={`p-3 rounded-xl border transition-all text-left relative overflow-hidden group ${
+                  theme === t.id ? 'border-violet-500/50 bg-violet-500/10' : 'border-glass-border hover:border-violet-500/25'
+                }`}
+              >
+                {t.premium && (
+                  <div className="absolute top-1 right-1 z-10">
+                    <div className={`p-1 rounded-md ${isLocked ? 'bg-void/60 text-gold-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                      {isLocked ? <Lock size={10} /> : <Diamond size={10} />}
+                    </div>
+                  </div>
+                )}
+                <div
+                  className="w-full h-10 rounded-lg mb-2 relative overflow-hidden"
+                  style={{ background: t.preview.bg, boxShadow: theme === t.id ? `0 0 20px ${t.preview.glow}` : 'none' }}
+                >
+                  {isLocked && <div className="absolute inset-0 bg-void/60 backdrop-blur-[2px] flex items-center justify-center text-[10px] text-white font-bold">₹{t.price}</div>}
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: t.preview.accent }} />
+                </div>
+                <p className="text-xs font-display font-600 text-ink line-clamp-1">{t.name}</p>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[9px] text-ink-subtle">{t.premium ? 'Premium' : 'Free'}</span>
+                  {theme === t.id && <Check size={9} className="text-violet-400" />}
+                  {isLocked && <Sparkles size={9} className="text-gold-400 animate-pulse" />}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
