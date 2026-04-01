@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Palette, Eye, Check, Plus, Trash2, ExternalLink,
   Github, Twitter, Linkedin, Mail, Code, Layers, Cpu,
   ChevronDown, ChevronUp, Monitor, Smartphone, Lock, Sparkles,
-  Diamond, CreditCard, Upload, Camera, Loader2, Image as ImageIcon
+  Diamond, CreditCard, Upload, Camera, Loader2, Image as ImageIcon,
+  Copy, X
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
@@ -453,6 +454,67 @@ export default function PortfolioPage() {
     toast.success('Portfolio Published Live! 🚀');
   };
 
+  const [showCodeModal, setShowCodeModal] = useState(false);
+
+  const handleExportCode = async () => {
+    const currentTheme = THEMES.find(t => t.id === theme);
+    const isLocked = currentTheme?.premium && !unlockedThemes.includes(theme);
+
+    if (isLocked) {
+      setUnlocking(true);
+      try {
+        const paymentId = await initializeRazorpayPayment({
+          amount: currentTheme.price * 100,
+          name: 'Portfolio Source Code',
+          email: user.email,
+          description: `Unlock ${currentTheme.name} Source Code`,
+        });
+
+        if (paymentId) {
+          const newUnlocked = [...unlockedThemes, theme];
+          await supabase.from('profiles').update({ unlocked_themes: newUnlocked }).eq('id', user.id);
+          setUnlockedThemes(newUnlocked);
+          toast.success('Theme Unlocked! Accessing Code...');
+          setShowCodeModal(true);
+        } else return;
+      } catch (err) {
+        toast.error('Payment failed');
+        return;
+      } finally {
+        setUnlocking(false);
+      }
+    } else {
+      setShowCodeModal(true);
+    }
+  };
+
+  const copyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    toast.success('Code copied to clipboard! 📋');
+  };
+
+  const getSourceCode = () => {
+    return `
+import React from 'react';
+import { motion } from 'framer-motion';
+
+// ${theme.toUpperCase()} PORTFOLIO COMPONENT
+// Premium Portfolio Template for ${data.name}
+
+export default function Portfolio() {
+  const data = ${JSON.stringify(data, null, 2)};
+
+  return (
+    <div className="portfolio-container">
+      {/* Porting the ${theme} template here... */}
+      <h1>{data.name}</h1>
+      <p>{data.title}</p>
+      {/* Full CSS and Framework details included in pro package */}
+    </div>
+  );
+}`;
+  };
+
   const handleUnlockBundle = async () => {
     setUnlocking(true);
     try {
@@ -509,6 +571,10 @@ export default function PortfolioPage() {
           <p className="text-sm text-ink-muted mt-1">Build a stunning personal website — no code required</p>
         </div>
         <div className="flex gap-3">
+          <Button variant="secondary" onClick={handleExportCode}>
+            <Code size={15} />
+            Export Code
+          </Button>
           {published ? (
             <div className="flex items-center gap-2 text-sm text-emerald-400 font-medium">
               <Check size={15} />
@@ -786,6 +852,48 @@ export default function PortfolioPage() {
                 </div>
               </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Source Code Modal */}
+      <AnimatePresence>
+        {showCodeModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowCodeModal(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-4xl max-h-[80vh] overflow-hidden rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl flex flex-col"
+            >
+              <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#1e293b]">
+                <div>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Code className="text-blue-400" />
+                    Source Code: {theme}
+                  </h3>
+                  <p className="text-sm text-slate-400 mt-1">Copy and paste this into early React projects</p>
+                </div>
+                <button onClick={() => setShowCodeModal(false)} className="p-2 rounded-xl hover:bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 bg-[#020617]">
+                <pre className="text-sm font-mono text-emerald-400 leading-relaxed whitespace-pre-wrap">
+                  {getSourceCode()}
+                </pre>
+              </div>
+              <div className="p-6 border-t border-white/10 bg-[#1e293b] flex items-center justify-end gap-4">
+                <p className="text-xs text-slate-500">Include Framer Motion and Tailwind CSS for full effects</p>
+                <Button variant="gold" onClick={() => copyCode(getSourceCode())}>
+                  <Copy size={16} className="mr-2" />
+                  Copy to Clipboard
+                </Button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
