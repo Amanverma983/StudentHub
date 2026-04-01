@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Briefcase, FileText, Globe } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Globe, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const LINKS = [
   { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Market', href: '/dashboard/marketplace', icon: Briefcase },
+  { label: 'Wallet', href: '/dashboard/wallet', icon: TrendingUp },
   { label: 'Resume', href: '/dashboard/resume', icon: FileText },
-  { label: 'Portfolio', href: '/dashboard/portfolio', icon: Globe },
 ];
 
 export default function MobileNav() {

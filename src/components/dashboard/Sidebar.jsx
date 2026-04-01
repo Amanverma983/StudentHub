@@ -14,6 +14,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 const WRITER_NAV = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Browse Gigs', href: '/dashboard/marketplace', icon: Briefcase },
+  { label: 'My Wallet', href: '/dashboard/wallet', icon: TrendingUp },
   { label: 'Resume Builder', href: '/dashboard/resume', icon: FileText },
   { label: 'Portfolio', href: '/dashboard/portfolio', icon: Globe },
 ];

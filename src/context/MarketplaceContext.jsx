@@ -117,7 +117,19 @@ export function MarketplaceProvider({ children }) {
 
   const submitDelivery = useCallback(async (gigId, deliveryData) => {
     try {
-      const { error } = await supabase
+      // 1. Get Gig Details (Price & Writer ID)
+      const { data: gig, error: fetchErr } = await supabase
+        .from('gigs')
+        .select('price, assigned_to')
+        .eq('id', gigId)
+        .single();
+
+      if (fetchErr) throw fetchErr;
+
+      const writerShare = Math.floor(gig.price * 0.9); // 90% to writer, 10% to admin
+
+      // 2. Mark Gig as Completed
+      const { error: gigErr } = await supabase
         .from('gigs')
         .update({
           status: 'completed',
@@ -126,14 +138,85 @@ export function MarketplaceProvider({ children }) {
         })
         .eq('id', gigId);
 
-      if (error) throw error;
+      if (gigErr) throw gigErr;
 
-      toast.success('Work delivered successfully!');
+      // 3. Credit Writer's Wallet
+      const { error: walletErr } = await supabase.rpc('increment_writer_balance', {
+        writer_id: gig.assigned_to,
+        amount: writerShare
+      });
+
+      // Fallback if RPC doesn't exist yet (manual update)
+      if (walletErr) {
+        const { data: profile } = await supabase.from('profiles').select('wallet_balance, total_earnings, completed_gigs').eq('id', gig.assigned_to).single();
+        await supabase.from('profiles').update({
+          wallet_balance: (profile.wallet_balance || 0) + writerShare,
+          total_earnings: (profile.total_earnings || 0) + writerShare,
+          completed_gigs: (profile.completed_gigs || 0) + 1
+        }).eq('id', gig.assigned_to);
+      }
+
+      toast.success(`Work delivered! ₹${writerShare} credited to your wallet.`);
       fetchGigs();
     } catch (err) {
       toast.error('Failed to submit delivery');
+      console.error(err);
     }
   }, [fetchGigs]);
+
+  const requestPayout = useCallback(async (writerId, amount, payoutMethod) => {
+    try {
+      // 1. Check balance first
+      const { data: profile, error: balErr } = await supabase
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('id', writerId)
+        .single();
+      
+      if (balErr) throw balErr;
+      if (profile.wallet_balance < amount) {
+        toast.error('Insufficient balance');
+        return false;
+      }
+
+      // 2. Create payout request
+      const { error: reqErr } = await supabase
+        .from('payout_requests')
+        .insert([{
+          writer_id: writerId,
+          amount: amount,
+          payout_method: payoutMethod,
+          status: 'pending'
+        }]);
+
+      if (reqErr) throw reqErr;
+
+      // 3. Deduct from wallet balance
+      await supabase.from('profiles').update({
+        wallet_balance: profile.wallet_balance - amount
+      }).eq('id', writerId);
+
+      toast.success('Withdrawal request submitted!');
+      return true;
+    } catch (err) {
+      toast.error('Payout request failed');
+      return false;
+    }
+  }, []);
+
+  const updatePayoutInfo = useCallback(async (userId, info) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ payout_info: info })
+        .eq('id', userId);
+      
+      if (error) throw error;
+      toast.success('Payout details saved!');
+    } catch (err) {
+      toast.error('Failed to save details');
+    }
+  }, []);
 
   const getMyGigs = useCallback((userId, role) => {
     if (role === 'customer') return gigs.filter(g => g.customer_id === userId);
@@ -160,6 +243,8 @@ export function MarketplaceProvider({ children }) {
       assignWriter,
       submitDelivery,
       getMyGigs,
+      requestPayout,
+      updatePayoutInfo,
     }}>
       {children}
     </MarketplaceContext.Provider>
