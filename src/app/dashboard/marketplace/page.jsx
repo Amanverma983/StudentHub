@@ -151,11 +151,12 @@ function PostGigModal({ onClose, onSubmit }) {
     deadline: '',
     question: '',
     delivery_address: '', // New Field
+    delivery_type: 'national', // New Field
     attachment: null,
   });
   const [loading, setLoading] = useState(false);
 
-  const pricing = calculateGigPrice(form.pages, form.urgency);
+  const pricing = calculateGigPrice(form.pages, form.urgency, form.delivery_type);
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -206,7 +207,8 @@ function PostGigModal({ onClose, onSubmit }) {
       await onSubmit({ 
         ...form, 
         price: pricing.total, 
-        attachment_url: attachmentUrl 
+        attachment_url: attachmentUrl,
+        delivery_type: form.delivery_type
       });
 
       onClose();
@@ -310,6 +312,35 @@ function PostGigModal({ onClose, onSubmit }) {
               onChange={e => handleChange('delivery_address', e.target.value)}
               required
             />
+          </div>
+
+          {/* Delivery Zone */}
+          <div className="bg-glass/50 rounded-2xl p-4 border border-glass-border">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-widest mb-3 flex items-center justify-between">
+              Delivery Destination Zone
+              <span className="text-[10px] lowercase font-normal italic opacity-60">*affects delivery charge</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { id: 'local', label: 'Local', desc: 'Same City' },
+                { id: 'regional', label: 'Regional', desc: 'Same State' },
+                { id: 'national', label: 'National', desc: 'Pan India' },
+              ].map(zone => (
+                <button
+                  key={zone.id}
+                  type="button"
+                  onClick={() => handleChange('delivery_type', zone.id)}
+                  className={`p-3 rounded-2xl border text-left transition-all ${
+                    form.delivery_type === zone.id 
+                      ? 'border-violet-500 bg-violet-500/10 shadow-lg shadow-violet-500/10' 
+                      : 'border-glass-border hover:border-violet-500/30 bg-glass/30 hover:bg-glass'
+                  }`}
+                >
+                  <p className={`text-xs font-bold ${form.delivery_type === zone.id ? 'text-violet-400' : 'text-ink'}`}>{zone.label}</p>
+                  <p className="text-[10px] text-ink-muted mt-0.5">{zone.desc}</p>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* PDF Upload */}

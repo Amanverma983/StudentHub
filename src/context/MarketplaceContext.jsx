@@ -63,6 +63,7 @@ export function MarketplaceProvider({ children }) {
           question: gigData.question,
           attachment_url: gigData.attachment_url || null,
           delivery_address: gigData.delivery_address,
+          delivery_type: gigData.delivery_type || 'national',
         }])
         .select()
         .single();
@@ -95,6 +96,45 @@ export function MarketplaceProvider({ children }) {
     }
   }, [fetchGigs]);
 
+  const assignWriter = useCallback(async (gigId, writerId) => {
+    try {
+      const { error } = await supabase
+        .from('gigs')
+        .update({ 
+          assigned_to: writerId, 
+          status: 'in-progress' 
+        })
+        .eq('id', gigId);
+
+      if (error) throw error;
+      
+      toast.success('Writer assigned! Work is now in-progress.');
+      fetchGigs();
+    } catch (err) {
+      toast.error('Failed to assign writer');
+    }
+  }, [fetchGigs]);
+
+  const submitDelivery = useCallback(async (gigId, deliveryData) => {
+    try {
+      const { error } = await supabase
+        .from('gigs')
+        .update({
+          status: 'completed',
+          tracking_id: deliveryData.trackingId,
+          delivery_proof_url: deliveryData.proofUrl,
+        })
+        .eq('id', gigId);
+
+      if (error) throw error;
+
+      toast.success('Work delivered successfully!');
+      fetchGigs();
+    } catch (err) {
+      toast.error('Failed to submit delivery');
+    }
+  }, [fetchGigs]);
+
   const getMyGigs = useCallback((userId, role) => {
     if (role === 'customer') return gigs.filter(g => g.customer_id === userId);
     if (role === 'writer') return gigs.filter(g => g.assigned_to === userId);
@@ -117,6 +157,8 @@ export function MarketplaceProvider({ children }) {
       setFilter,
       postGig,
       applyToGig,
+      assignWriter,
+      submitDelivery,
       getMyGigs,
     }}>
       {children}

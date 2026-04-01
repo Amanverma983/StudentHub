@@ -69,19 +69,25 @@ export const RATES = {
   express: 15,
 };
 
-export const DELIVERY_CHARGE = 40;
+export const DELIVERY_RATES = {
+  local: 45,
+  regional: 75,
+  national: 110,
+};
+
 export const SERVICE_FEE_RATE = 0.10; // 10% Platform Commission
 
-export function calculateGigPrice(pages, urgency = 'standard') {
+export function calculateGigPrice(pages, urgency = 'standard', deliveryType = 'national') {
   const rate = RATES[urgency] || RATES.standard;
+  const deliveryCharge = DELIVERY_RATES[deliveryType] || DELIVERY_RATES.national;
   const base = pages * rate;
   const serviceFee = Math.round(base * SERVICE_FEE_RATE);
-  const total = base + DELIVERY_CHARGE + serviceFee;
+  const total = base + deliveryCharge + serviceFee;
 
   return {
     total,
     base,
-    deliveryCharge: DELIVERY_CHARGE,
+    deliveryCharge,
     serviceFee,
   };
 }
