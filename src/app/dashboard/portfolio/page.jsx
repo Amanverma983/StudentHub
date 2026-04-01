@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Palette, Eye, Check, Plus, Trash2, ExternalLink,
   Github, Twitter, Linkedin, Mail, Code, Layers, Cpu,
   ChevronDown, ChevronUp, Monitor, Smartphone, Lock, Sparkles,
-  Diamond, CreditCard
+  Diamond, CreditCard, Upload, Camera, Loader2, Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
@@ -353,43 +353,82 @@ export default function PortfolioPage() {
   const [newSkill, setNewSkill] = useState('');
   const [unlockedThemes, setUnlockedThemes] = useState(user?.unlocked_themes || []);
   const [unlocking, setUnlocking] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  // Sync unlocked themes when user data loads
+  // Sync unlocked themes
   useEffect(() => {
-    if (user?.unlocked_themes) {
-      setUnlockedThemes(user.unlocked_themes);
-    }
+    if (user?.unlocked_themes) setUnlockedThemes(user.unlocked_themes);
   }, [user]);
 
   const supabase = createClient();
 
-  const handleUnlockTheme = async (themeId, price) => {
-    setUnlocking(true);
-    try {
-      const paymentId = await initializeRazorpayPayment({
-        amount: price * 100,
-        name: 'Portfolio Template Unlock',
-        email: user.email,
-        description: `Unlock ${themeId} Premium Template`,
-      });
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      if (paymentId) {
-        const newUnlocked = [...unlockedThemes, themeId];
-        const { error } = await supabase
-          .from('profiles')
-          .update({ unlocked_themes: newUnlocked })
-          .eq('id', user.id);
-
-        if (error) throw error;
-        setUnlockedThemes(newUnlocked);
-        setTheme(themeId);
-        toast.success(`${themeId} unlocked!`);
-      }
-    } catch (err) {
-      toast.error('Payment failed or cancelled');
-    } finally {
-      setUnlocking(false);
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB');
+      return;
     }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolios')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolios')
+        .getPublicUrl(filePath);
+
+      update('avatar', publicUrl);
+      toast.success('Photo uploaded!');
+    } catch (err) {
+      toast.error('Upload failed. Check bucket policies.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    const currentTheme = THEMES.find(t => t.id === theme);
+    const isLocked = currentTheme?.premium && !unlockedThemes.includes(theme);
+
+    if (isLocked) {
+      setUnlocking(true);
+      try {
+        const paymentId = await initializeRazorpayPayment({
+          amount: currentTheme.price * 100,
+          name: 'Portfolio Template Unlock',
+          email: user.email,
+          description: `Unlock ${currentTheme.name} to Publish`,
+        });
+
+        if (paymentId) {
+          const newUnlocked = [...unlockedThemes, theme];
+          await supabase.from('profiles').update({ unlocked_themes: newUnlocked }).eq('id', user.id);
+          setUnlockedThemes(newUnlocked);
+          toast.success('Theme Unlocked! Publishing...');
+        } else return;
+      } catch (err) {
+        toast.error('Payment failed');
+        return;
+      } finally {
+        setUnlocking(false);
+      }
+    }
+
+    setPublishing(true);
+    await new Promise(r => setTimeout(r, 1200));
+    setPublishing(false);
+    setPublished(true);
+    toast.success('Portfolio Published Live! 🚀');
   };
 
   const handleUnlockBundle = async () => {
@@ -404,12 +443,7 @@ export default function PortfolioPage() {
 
       if (paymentId) {
         const newUnlocked = [...unlockedThemes, '3d-glass', '3d-cyber'];
-        const { error } = await supabase
-          .from('profiles')
-          .update({ unlocked_themes: newUnlocked })
-          .eq('id', user.id);
-
-        if (error) throw error;
+        await supabase.from('profiles').update({ unlocked_themes: newUnlocked }).eq('id', user.id);
         setUnlockedThemes(newUnlocked);
         toast.success('3D Bundle unlocked! 🎉');
       }
@@ -441,14 +475,8 @@ export default function PortfolioPage() {
 
   const removeProject = (id) => update('projects', data.projects.filter(p => p.id !== id));
 
-  const handlePublish = async () => {
-    setPublishing(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setPublishing(false);
-    setPublished(true);
-  };
-
   const PreviewComponent = PREVIEW_COMPONENTS[theme];
+  const isCurrentlyLocked = THEMES.find(t => t.id === theme)?.premium && !unlockedThemes.includes(theme);
 
   return (
     <div className="space-y-6">
@@ -465,9 +493,9 @@ export default function PortfolioPage() {
               Published at studenthub.in/{data.name.toLowerCase().replace(/\s+/g, '')}
             </div>
           ) : (
-            <Button variant="gold" onClick={handlePublish} loading={publishing}>
+            <Button variant={isCurrentlyLocked ? 'gold' : 'gold'} onClick={handlePublish} loading={publishing || unlocking}>
               <Globe size={15} />
-              {publishing ? 'Publishing...' : 'Publish Site'}
+              {publishing ? 'Publishing...' : unlocking ? 'Unlocking...' : isCurrentlyLocked ? 'Unlock & Publish' : 'Publish Site'}
             </Button>
           )}
         </div>
@@ -496,15 +524,14 @@ export default function PortfolioPage() {
             return (
               <button
                 key={t.id}
-                onClick={() => isLocked ? handleUnlockTheme(t.id, t.price) : setTheme(t.id)}
-                disabled={unlocking}
+                onClick={() => setTheme(t.id)}
                 className={`p-3 rounded-xl border transition-all text-left relative overflow-hidden group ${
                   theme === t.id ? 'border-violet-500/50 bg-violet-500/10' : 'border-glass-border hover:border-violet-500/25'
                 }`}
               >
                 {t.premium && (
                   <div className="absolute top-1 right-1 z-10">
-                    <div className={`p-1 rounded-md ${isLocked ? 'bg-void/60 text-gold-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                    <div className={`p-1 rounded-md ${isLocked ? 'bg-gold-500/20 text-gold-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
                       {isLocked ? <Lock size={10} /> : <Diamond size={10} />}
                     </div>
                   </div>
@@ -513,14 +540,12 @@ export default function PortfolioPage() {
                   className="w-full h-10 rounded-lg mb-2 relative overflow-hidden"
                   style={{ background: t.preview.bg, boxShadow: theme === t.id ? `0 0 20px ${t.preview.glow}` : 'none' }}
                 >
-                  {isLocked && <div className="absolute inset-0 bg-void/60 backdrop-blur-[2px] flex items-center justify-center text-[10px] text-white font-bold">₹{t.price}</div>}
                   <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: t.preview.accent }} />
                 </div>
                 <p className="text-xs font-display font-600 text-ink line-clamp-1">{t.name}</p>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-[9px] text-ink-subtle">{t.premium ? 'Premium' : 'Free'}</span>
+                  <span className="text-[9px] text-ink-subtle">{t.premium ? `₹${t.price}` : 'Free'}</span>
                   {theme === t.id && <Check size={9} className="text-violet-400" />}
-                  {isLocked && <Sparkles size={9} className="text-gold-400 animate-pulse" />}
                 </div>
               </button>
             );
@@ -564,7 +589,39 @@ export default function PortfolioPage() {
 
             {/* Personal */}
             <Section title="Personal Info" icon={Globe}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Photo Upload Zone */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs text-ink-muted mb-2 font-medium">Profile Photo</label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-glass-border bg-glass/20 flex items-center justify-center relative overflow-hidden group">
+                      {data.avatar ? (
+                        <img src={data.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <Camera size={24} className="text-ink-subtle" />
+                      )}
+                      {uploading ? (
+                        <div className="absolute inset-0 bg-void/60 flex items-center justify-center">
+                          <Loader2 size={16} className="text-white animate-spin" />
+                        </div>
+                      ) : (
+                        <label className="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 bg-void/40 transition-opacity flex items-center justify-center text-[10px] text-white font-bold">
+                          Change
+                          <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                        </label>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-ink-subtle mb-2">Drag and drop or click to upload. Max 5MB (JPG, PNG, WebP)</p>
+                      <input 
+                        className="input-field text-[10px] py-1.5" 
+                        placeholder="Or paste image URL..." 
+                        value={data.avatar} 
+                        onChange={e => update('avatar', e.target.value)} 
+                      />
+                    </div>
+                  </div>
+                </div>
                 {[
                   { field: 'name', label: 'Full Name' },
                   { field: 'title', label: 'Professional Title' },
@@ -673,25 +730,39 @@ export default function PortfolioPage() {
           </motion.div>
         ) : (
           <motion.div key="preview" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}>
-            <div className={`mx-auto transition-all duration-300 ${device === 'mobile' ? 'max-w-sm' : 'max-w-full'}`}>
-              <div className="glass-card rounded-3xl overflow-hidden border border-glass-border">
-                {/* Browser chrome */}
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-glass-border">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                    <div className="w-3 h-3 rounded-full bg-gold-500/60" />
-                    <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
+              <div className={`mx-auto transition-all duration-300 ${device === 'mobile' ? 'max-w-sm' : 'max-w-full'}`}>
+                <div className="glass-card rounded-3xl overflow-hidden border border-glass-border relative group">
+                  {/* Browser chrome */}
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-glass-border bg-void/20">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                      <div className="w-3 h-3 rounded-full bg-gold-500/60" />
+                      <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
+                    </div>
+                    <div className="flex-1 mx-4 px-3 py-1 bg-glass rounded-lg text-xs text-ink-subtle font-mono text-center truncate">
+                      studenthub.in/{data.name.toLowerCase().replace(/\s+/g, '')}
+                    </div>
                   </div>
-                  <div className="flex-1 mx-4 px-3 py-1 bg-glass rounded-lg text-xs text-ink-subtle font-mono">
-                    studenthub.in/{data.name.toLowerCase().replace(/\s+/g, '')}
+                  
+                  {/* Watermark Overlay for Locked Themes */}
+                  {isCurrentlyLocked && (
+                    <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
+                      <div className="grid grid-cols-3 gap-12 rotate-[-35deg] opacity-[0.03]">
+                        {Array(30).fill(0).map((_, i) => (
+                          <span key={i} className="text-4xl font-black whitespace-nowrap">PREVIEW MODE</span>
+                        ))}
+                      </div>
+                      <div className="pointer-events-auto absolute bottom-8 left-1/2 -translate-x-1/2 bg-gold-400 text-void font-bold px-4 py-2 rounded-full text-xs shadow-2xl flex items-center gap-2 animate-bounce">
+                        <Lock size={12} /> Unlock this theme to Publish Live
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={`overflow-y-auto max-h-[600px] ${isCurrentlyLocked ? 'grayscale-[0.2]' : ''}`}>
+                    <PreviewComponent data={data} />
                   </div>
-                  <ExternalLink size={12} className="text-ink-subtle" />
-                </div>
-                <div className="overflow-y-auto max-h-[600px]">
-                  <PreviewComponent data={data} />
                 </div>
               </div>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
