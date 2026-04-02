@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -12,24 +12,60 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isFetching = useRef(false);
 
   useEffect(() => {
+    // 1. Optimistic Load from Cache (Client-side only)
+    if (typeof window !== 'undefined') {
+      const cachedProfile = localStorage.getItem('sh_profile');
+      if (cachedProfile) {
+        try {
+          const parsed = JSON.parse(cachedProfile);
+          setProfile(parsed);
+          // If we have a cached profile, we can show the dashboard sooner
+          // but we still wait for auth verification to be safe
+        } catch (e) {
+          localStorage.removeItem('sh_profile');
+        }
+      }
+    }
+
+    const fetchProfile = async (userId) => {
+      if (isFetching.current) return;
+      isFetching.current = true;
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (profileError) throw profileError;
+        
+        setProfile(profileData);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('sh_profile', JSON.stringify(profileData));
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      } finally {
+        isFetching.current = false;
+        setLoading(false);
+      }
+    };
+
     // Initial Session Check
     const checkUser = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUser(session.user);
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          setProfile(profileData);
+          await fetchProfile(session.user.id);
+        } else {
+          setLoading(false);
         }
       } catch (err) {
         console.error('Initial session check failed:', err);
-      } finally {
         setLoading(false);
       }
     };
@@ -40,21 +76,13 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user);
-        try {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          setProfile(profileData);
-        } catch (err) {
-          console.error('Error fetching profile on auth change:', err);
-        }
+        await fetchProfile(session.user.id);
       } else {
         setUser(null);
         setProfile(null);
+        if (typeof window !== 'undefined') localStorage.removeItem('sh_profile');
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
