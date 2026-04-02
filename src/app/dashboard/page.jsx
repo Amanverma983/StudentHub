@@ -28,11 +28,18 @@ function WriterDashboard({ user }) {
   // Available Gigs (Status open)
   const openGigs = filteredGigs.filter(g => g.status === 'open').slice(0, 3);
 
+  // Real Stats Calculation
+  const totalEarned = filteredGigs
+    .filter(g => g.assigned_to === user.id && g.status === 'completed')
+    .reduce((sum, g) => sum + (Number(g.budget) || 0), 0);
+  
+  const completedCount = filteredGigs.filter(g => g.assigned_to === user.id && g.status === 'completed').length;
+
   const stats = [
-    { label: 'Total Earned', value: formatCurrency(user.totalEarnings || 0), icon: IndianRupee, trend: '+₹2,400 this month', color: 'text-gold-400', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
-    { label: 'Gigs Completed', value: user.completedGigs || 0, icon: CheckCircle, trend: '+5 this week', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-    { label: 'Your Rating', value: user.rating || '–', icon: Star, trend: 'Top 10% writer', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
-    { label: 'Active Gigs', value: activeGigs.length, icon: Timer, trend: 'In-progress', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
+    { label: 'Total Earned', value: formatCurrency(totalEarned), icon: IndianRupee, trend: 'Net income', color: 'text-gold-400', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
+    { label: 'Gigs Completed', value: completedCount, icon: CheckCircle, trend: 'Finished projects', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+    { label: 'Your Rating', value: user.rating || '5.0', icon: Star, trend: 'Based on feedback', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+    { label: 'Active Gigs', value: activeGigs.length, icon: Timer, trend: 'Working now', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
   ];
 
   const handleSubmitDelivery = async (e) => {
@@ -201,11 +208,20 @@ function CustomerDashboard({ user }) {
     setActiveExpands(prev => ({ ...prev, [gigId]: false }));
   };
 
+  // Real Stats Calculation
+  const totalSpent = myGigs
+    .filter(g => g.payment_status === 'paid')
+    .reduce((sum, g) => sum + (Number(g.budget) || 0), 0);
+  
+  const activeCount = myGigs.filter(g => g.status !== 'completed').length;
+  const completedCount = myGigs.filter(g => g.status === 'completed').length;
+  const writersUsed = new Set(myGigs.map(g => g.assigned_to).filter(id => !!id)).size;
+
   const stats = [
-    { label: 'Total Spent', value: formatCurrency(user.totalSpent || 0), icon: IndianRupee, color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
-    { label: 'Active Orders', value: user.activeOrders || 0, icon: Clock, color: 'text-gold-400', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
-    { label: 'Completed', value: '12', icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-    { label: 'Writers Used', value: '8', icon: Award, color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
+    { label: 'Total Spent', value: formatCurrency(totalSpent), icon: IndianRupee, color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+    { label: 'Active Orders', value: activeCount, icon: Clock, color: 'text-gold-400', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
+    { label: 'Completed', value: completedCount, icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+    { label: 'Writers Used', value: writersUsed, icon: Award, color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
   ];
 
   return (
