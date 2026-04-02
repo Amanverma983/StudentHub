@@ -27,12 +27,12 @@ const CUSTOMER_NAV = [
 ];
 
 export default function DashboardSidebar() {
-  const { user, signOut, isWriter } = useAuth();
+  const { user, profile, signOut, isWriter } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const navLinks = isWriter ? WRITER_NAV : CUSTOMER_NAV;
-  const initials = user?.name
-    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const initials = profile?.name
+    ? profile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : 'U';
 
   const handleSignOut = async () => {
