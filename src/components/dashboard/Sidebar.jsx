@@ -56,8 +56,12 @@ export default function DashboardSidebar() {
       {/* User Card */}
       <div className="m-4 p-4 glass-card rounded-2xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-violet-900 flex items-center justify-center text-sm font-bold text-white shrink-0">
-            {initials}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-violet-900 flex items-center justify-center text-sm font-bold text-white shrink-0 overflow-hidden border border-glass-border">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt={profile.name} className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
           <div className="min-w-0">
             <p className="font-display font-600 text-sm text-ink truncate">{user?.name}</p>

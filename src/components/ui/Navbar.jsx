@@ -22,7 +22,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, profile, isAuthenticated, signOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -42,8 +42,8 @@ export default function Navbar() {
     router.push('/');
   };
 
-  const initials = user?.name
-    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const initials = profile?.name
+    ? profile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : 'U';
 
   return (
@@ -121,8 +121,12 @@ export default function Navbar() {
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-glass transition-all duration-200 border border-transparent hover:border-glass-border"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-violet-800 flex items-center justify-center text-xs font-bold text-white">
-                      {initials}
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-violet-800 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                      {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt={profile.name} className="w-full h-full object-cover" />
+                      ) : (
+                        initials
+                      )}
                     </div>
                     <ChevronDown
                       size={14}
@@ -214,8 +218,12 @@ export default function Navbar() {
                 {isAuthenticated ? (
                   <>
                     <div className="flex items-center gap-3 px-4 py-3 mb-2">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-violet-800 flex items-center justify-center text-sm font-bold text-white">
-                        {initials}
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-violet-800 flex items-center justify-center text-sm font-bold text-white overflow-hidden">
+                        {profile?.avatar_url ? (
+                          <img src={profile.avatar_url} alt={profile.name} className="w-full h-full object-cover" />
+                        ) : (
+                          initials
+                        )}
                       </div>
                       <div>
                         <p className="text-sm font-semibold font-display">{user.name}</p>
