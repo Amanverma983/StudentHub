@@ -15,15 +15,22 @@ export function AuthProvider({ children }) {
   const isFetching = useRef(false);
 
   useEffect(() => {
-    // 1. Optimistic Load from Cache (Client-side only)
+    // 1. Safety Timeout: Never hang for more than 5 seconds
+    const safetyTimer = setTimeout(() => {
+      if (loading) {
+        console.warn('⚠️ Auth initialization timed out. Forcing load state.');
+        setLoading(false);
+      }
+    }, 5000);
+
+    // 2. Initial Cache Load (Instant UI)
     if (typeof window !== 'undefined') {
       const cachedProfile = localStorage.getItem('sh_profile');
       if (cachedProfile) {
         try {
           const parsed = JSON.parse(cachedProfile);
           setProfile(parsed);
-          setLoading(false);
-          // If we have a cached profile, we can show the dashboard immediately
+          setLoading(false); 
         } catch (e) {
           localStorage.removeItem('sh_profile');
         }
@@ -31,8 +38,10 @@ export function AuthProvider({ children }) {
     }
 
     const fetchProfile = async (userId) => {
+      // Avoid duplicate parallel fetches
       if (isFetching.current) return;
       isFetching.current = true;
+      
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -51,41 +60,29 @@ export function AuthProvider({ children }) {
       } finally {
         isFetching.current = false;
         setLoading(false);
+        clearTimeout(safetyTimer);
       }
     };
 
-    // Initial Session Check
-    const checkUser = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
-        } else {
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('Initial session check failed:', err);
-        setLoading(false);
-      }
-    };
-
-    checkUser();
-
-    // Listen for Auth Changes
+    // 3. Single Unified Listener (Initialize + Changes)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user);
+        // We only trigger fetch if it's a significant event or we don't have a profile yet
         await fetchProfile(session.user.id);
       } else {
         setUser(null);
         setProfile(null);
         if (typeof window !== 'undefined') localStorage.removeItem('sh_profile');
         setLoading(false);
+        clearTimeout(safetyTimer);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   const signIn = useCallback(async (email, password) => {
