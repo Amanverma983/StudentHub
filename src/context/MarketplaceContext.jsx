@@ -68,7 +68,11 @@ export function MarketplaceProvider({ children }) {
     fetchThemeRequests();
   }, [fetchGigs, fetchThemeRequests]);
 
-  const postGig = useCallback(async (gigData, user) => {
+  const postGig = useCallback(async (gigData, currentUser) => {
+    if (!currentUser?.id) {
+      toast.error('You must be logged in to post');
+      return null;
+    }
     try {
       const { data, error } = await supabase
         .from('gigs')
@@ -80,7 +84,7 @@ export function MarketplaceProvider({ children }) {
           price: gigData.price,
           deadline: gigData.deadline,
           urgency: gigData.urgency,
-          customer_id: user.id,
+          customer_id: currentUser.id,
           tags: [gigData.subject, ...(gigData.attachment ? ['📎 Attachment'] : [])],
           question: gigData.question,
           attachment_url: gigData.attachment_url || null,

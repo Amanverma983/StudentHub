@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Banknote, IndianRupee, Clock, CheckCircle, 
   ArrowUpRight, Wallet, History, AlertCircle, Info,
-  Check, Smartphone, ExternalLink, Mail, User, ArrowRight
+  Check, Smartphone, ExternalLink, Mail, User, ArrowRight,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';

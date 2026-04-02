@@ -32,12 +32,12 @@ function WriterDashboard({ user }) {
   // Real Stats Calculation
   const totalEarned = filteredGigs
     .filter(g => g.assigned_to === user.id && g.status === 'completed')
-    .reduce((sum, g) => sum + (Number(g.budget) || 0), 0);
+    .reduce((sum, g) => sum + (Number(g.price) || 0), 0);
   
   const completedCount = filteredGigs.filter(g => g.assigned_to === user.id && g.status === 'completed').length;
 
   const stats = [
-    { label: 'Total Earned', value: formatCurrency(totalEarned), icon: IndianRupee, trend: 'Net income', color: 'text-gold-400', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
+    { label: 'Total Earned', value: formatCurrency(totalEarned || 0), icon: IndianRupee, trend: 'Net income', color: 'text-gold-400', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
     { label: 'Gigs Completed', value: completedCount, icon: CheckCircle, trend: 'Finished projects', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
     { label: 'Your Rating', value: user?.rating || '5.0', icon: Star, trend: 'Based on feedback', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
     { label: 'Active Gigs', value: activeGigs?.length || 0, icon: Timer, trend: 'Working now', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
@@ -218,9 +218,9 @@ function CustomerDashboard({ user }) {
   };
 
   // Real Stats Calculation
-  const totalSpent = myGigs
+  const totalSpent = (myGigs || [])
     .filter(g => g.payment_status === 'paid')
-    .reduce((sum, g) => sum + (Number(g.budget) || 0), 0);
+    .reduce((sum, g) => sum + (Number(g.price) || 0), 0);
   
   const activeCount = (myGigs || []).filter(g => g.status !== 'completed').length;
   const completedCount = (myGigs || []).filter(g => g.status === 'completed').length;

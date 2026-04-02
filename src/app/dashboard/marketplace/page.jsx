@@ -55,7 +55,7 @@ function GigCard({ gig, onApply, hasApplied, isWriter }) {
       <p className="text-xs text-ink-muted leading-relaxed line-clamp-2">{gig.description}</p>
 
       <div className="flex flex-wrap gap-1.5">
-        {gig.tags.map(tag => (
+        {gig.tags?.map(tag => (
           <span key={tag} className="text-xs px-2 py-0.5 rounded-lg bg-glass border border-glass-border text-ink-subtle">
             {tag}
           </span>
