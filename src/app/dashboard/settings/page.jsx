@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { 
   User, Mail, Shield, Smartphone, Bell, ChevronRight, Zap, 
   Camera, Loader2, Plus, Edit2, Save, X, Lock, Check,
-  ShieldCheck, AlertCircle
+  ShieldCheck, AlertCircle, Star
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import toast from 'react-hot-toast';
