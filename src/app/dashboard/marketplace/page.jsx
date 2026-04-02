@@ -310,12 +310,12 @@ function PostGigModal({ onClose, onSubmit }) {
           <div>
             <label className="block text-xs font-semibold text-link-muted uppercase tracking-widest mb-2 flex items-center gap-2">
               <MapPin size={13} className="text-violet-400" />
-              Delivery Address (Visible only to assigned writer)
+              {form.delivery_type === 'digital' ? 'WhatsApp Number / Email' : 'Delivery Address'} (Visible only to assigned writer)
             </label>
             <textarea
               className="input-field resize-none bg-gold-400/5 focus:bg-gold-400/10"
               rows={3}
-              placeholder="Enter complete address for handwritten assignment delivery..."
+              placeholder={form.delivery_type === 'digital' ? 'Enter WhatsApp number or Email to receive the work...' : 'Enter complete address for handwritten assignment delivery...'}
               value={form.delivery_address}
               onChange={e => handleChange('delivery_address', e.target.value)}
               required
@@ -415,8 +415,10 @@ function PostGigModal({ onClose, onSubmit }) {
                 onChange={e => handleChange('pages', parseInt(e.target.value))}
                 className="w-full accent-violet-500"
               />
-              <div className="flex justify-between text-xs text-ink-subtle mt-1">
-                <span>1</span><span>50</span>
+              <div className="flex justify-between text-[10px] text-ink-subtle mt-1.5 px-0.5">
+                <span>1 Page</span>
+                <span className="italic opacity-60">1 Page ≈ 250 words / 2-3 questions</span>
+                <span>50</span>
               </div>
             </div>
             <div>

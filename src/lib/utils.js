@@ -71,9 +71,9 @@ export const RATES = {
 
 export const DELIVERY_RATES = {
   digital: 0,
-  local: 45,
+  local: 35,
   regional: 75,
-  national: 110,
+  national: 80,
 };
 
 export const SERVICE_FEE_RATE = 0.10; // 10% Platform Commission
