@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { User, Mail, Shield, Smartphone, Bell, ChevronRight, Zap, Camera, Loader2 } from 'lucide-react';
+import { User, Mail, Shield, Smartphone, Bell, ChevronRight, Zap, Camera, Loader2, Plus } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
