@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, FileText, Globe,
   LogOut, Zap, PenTool, ShoppingBag, TrendingUp,
-  Settings, ChevronRight, Star,
+  Settings, ChevronRight, Star, HelpCircle
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -17,6 +17,7 @@ const WRITER_NAV = [
   { label: 'My Wallet', href: '/dashboard/wallet', icon: TrendingUp },
   { label: 'Resume Builder', href: '/dashboard/resume', icon: FileText },
   { label: 'Portfolio', href: '/dashboard/portfolio', icon: Globe },
+  { label: 'Help & Support', href: '/dashboard/support', icon: HelpCircle },
 ];
 
 const CUSTOMER_NAV = [
@@ -24,6 +25,7 @@ const CUSTOMER_NAV = [
   { label: 'Post Assignment', href: '/dashboard/marketplace', icon: ShoppingBag },
   { label: 'Resume Builder', href: '/dashboard/resume', icon: FileText },
   { label: 'Portfolio', href: '/dashboard/portfolio', icon: Globe },
+  { label: 'Help & Support', href: '/dashboard/support', icon: HelpCircle },
 ];
 
 export default function DashboardSidebar() {

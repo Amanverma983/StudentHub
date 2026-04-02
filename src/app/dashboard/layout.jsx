@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardSidebar from '@/components/dashboard/Sidebar';
 import MobileNav from '@/components/dashboard/MobileNav';
 import Navbar from '@/components/ui/Navbar';
+import SupportChatbot from '@/components/support/Chatbot';
 
 export default function DashboardLayout({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -60,6 +61,9 @@ export default function DashboardLayout({ children }) {
 
       {/* Mobile Bottom Nav */}
       <MobileNav />
+
+      {/* Persistent AI Chatbot */}
+      <SupportChatbot />
     </div>
   );
 }
