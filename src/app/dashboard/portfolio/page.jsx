@@ -6,7 +6,7 @@ import { Globe, Palette, Eye, Check, Plus, Trash2, ExternalLink,
   Github, Twitter, Linkedin, Mail, Code, Layers, Cpu,
   ChevronDown, ChevronUp, Monitor, Smartphone, Lock, Sparkles,
   Diamond, CreditCard, Upload, Camera, Loader2, Image as ImageIcon,
-  Copy, X
+  Copy, X, Star
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
@@ -357,12 +357,12 @@ function AnimeMidnightPreview({ data }) {
             {data.avatar ? (
               <img src={data.avatar} alt={data.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
             ) : (
-              data.name[0]
+              (data.name || 'U')[0]
             )}
           </div>
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: '900', color: '#F8F8FF', marginBottom: '8px', letterSpacing: '-0.5px' }}>
-          {data.name.split(' ')[0]} <span style={{ background: 'linear-gradient(to right, #FF0099, #7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{data.name.split(' ').slice(1).join(' ')}</span>
+          {(data.name || 'User').split(' ')[0]} <span style={{ background: 'linear-gradient(to right, #FF0099, #7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{(data.name || '').split(' ').slice(1).join(' ')}</span>
         </h1>
         <p style={{ color: '#9BA3B5', fontSize: '14px', maxWidth: '300px', margin: '0 auto 24px', lineHeight: '1.5' }}>{data.tagline}</p>
         
