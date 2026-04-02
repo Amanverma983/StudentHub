@@ -160,6 +160,26 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
+  const updateEmail = useCallback(async (newEmail) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) throw error;
+      toast.success('Verification email sent to new address');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success('Password updated successfully');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }, []);
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -174,6 +194,8 @@ export function AuthProvider({ children }) {
       signUp,
       signOut,
       updateProfile,
+      updateEmail,
+      updatePassword,
     }}>
       {children}
     </AuthContext.Provider>
