@@ -172,7 +172,7 @@ export function MarketplaceProvider({ children }) {
           .from('profiles')
           .update({ unlocked_themes: newThemes })
           .eq('id', userId);
-        
+
         toast.success('Theme unlocked for user!');
       } else {
         toast.error('Theme request rejected');

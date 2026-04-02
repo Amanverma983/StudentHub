@@ -106,8 +106,10 @@ export default function SettingsPage() {
     try {
       await updateProfile({ role: newRole });
       toast.success(`Switched to ${newRole} mode!`);
-      // Redirect to dashboard to refresh layout
-      router.push('/dashboard');
+      // Give context a moment to settle before redirect
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 100);
     } catch (err) {
       toast.error('Failed to switch role');
     } finally {
