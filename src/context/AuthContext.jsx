@@ -70,7 +70,8 @@ export function AuthProvider({ children }) {
 
       if (error) throw error;
       
-      toast.success('Account created successfully! You can now sign in.');
+      // Handle Profile creation (triggered by SQL function, but we ensure it)
+      toast.success('Account created! Please verify your email.');
       return { user: data.user, error: null };
     } catch (err) {
       toast.error(err.message);
