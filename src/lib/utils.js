@@ -70,6 +70,7 @@ export const RATES = {
 };
 
 export const DELIVERY_RATES = {
+  digital: 0,
   local: 45,
   regional: 75,
   national: 110,

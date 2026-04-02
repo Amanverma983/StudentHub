@@ -328,8 +328,9 @@ function PostGigModal({ onClose, onSubmit }) {
               Delivery Destination Zone
               <span className="text-[10px] lowercase font-normal italic opacity-60">*affects delivery charge</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               {[
+                { id: 'digital', label: 'Digital', desc: 'Email/PDF' },
                 { id: 'local', label: 'Local', desc: 'Same City' },
                 { id: 'regional', label: 'Regional', desc: 'Same State' },
                 { id: 'national', label: 'National', desc: 'Pan India' },
