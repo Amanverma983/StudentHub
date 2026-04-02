@@ -22,7 +22,8 @@ export function MarketplaceProvider({ children }) {
         .from('gigs')
         .select(`
           *,
-          profiles:customer_id(name)
+          customer:customer_id(name),
+          writer:assigned_to(name, phone)
         `)
         .order('created_at', { ascending: false });
 
@@ -30,7 +31,9 @@ export function MarketplaceProvider({ children }) {
 
       const formatted = data.map(g => ({
         ...g,
-        customerName: g.profiles?.name || 'User',
+        customerName: g.customer?.name || 'User',
+        writerPhone: g.writer?.phone || null,
+        writerName: g.writer?.name || null,
         postedAt: g.created_at,
       }));
 
@@ -84,8 +87,9 @@ export function MarketplaceProvider({ children }) {
           delivery_address: gigData.delivery_address,
           delivery_type: gigData.delivery_type || 'national',
           payment_status: 'pending_verification', // New field
-          payment_proof_url: gigData.payment_proof_url || null, // New field
-          transaction_id: gigData.transaction_id || null, // New field
+          payment_proof_url: gigData.payment_proof_url || null,
+          transaction_id: gigData.transaction_id || null,
+          customer_phone: gigData.phone || null,
         }])
         .select()
         .single();

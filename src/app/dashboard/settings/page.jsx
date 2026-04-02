@@ -17,17 +17,20 @@ export default function SettingsPage() {
   const { user, profile, updateProfile, updateEmail, updatePassword, isWriter } = useAuth();
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(null); // 'name', 'email', 'pass', 'role'
+  const [saving, setSaving] = useState(null); // 'name', 'email', 'phone', 'pass', 'role'
   const [isChangingRole, setIsChangingRole] = useState(false);
   const fileInputRef = useRef(null);
   const supabase = createClient();
-
+  
   // Edit States
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(profile?.name || '');
   
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [newEmail, setNewEmail] = useState(user?.email || '');
+
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [newPhone, setNewPhone] = useState(profile?.phone || '');
   
   const [isEditingPass, setIsEditingPass] = useState(false);
   const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
@@ -39,6 +42,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (profile?.name) setNewName(profile.name);
     if (user?.email) setNewEmail(user.email);
+    if (profile?.phone) setNewPhone(profile.phone);
   }, [profile, user]);
 
   const handleAvatarUpload = async (e) => {
@@ -86,6 +90,14 @@ export default function SettingsPage() {
     setSaving('email');
     await updateEmail(newEmail);
     setIsEditingEmail(false);
+    setSaving(null);
+  };
+
+  const handleUpdatePhone = async () => {
+    if (!newPhone.trim()) return setIsEditingPhone(false);
+    setSaving('phone');
+    await updateProfile({ phone: newPhone });
+    setIsEditingPhone(false);
     setSaving(null);
   };
 
@@ -241,6 +253,47 @@ export default function SettingsPage() {
                   </>
                 ) : (
                   <button onClick={() => setIsEditingEmail(true)} className="p-2 text-ink-muted hover:text-violet-400 transition-all">
+                    <Edit2 size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Phone Item */}
+            <div className="px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-glass/30 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-2xl bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
+                  <Smartphone size={18} className="text-violet-400" />
+                </div>
+                {isEditingPhone ? (
+                  <input
+                    type="tel"
+                    value={newPhone}
+                    onChange={e => setNewPhone(e.target.value)}
+                    placeholder="+91 0000000000"
+                    className="bg-void border border-violet-500/30 rounded-lg px-3 py-1.5 text-sm text-ink focus:outline-none focus:border-violet-500"
+                    autoFocus
+                  />
+                ) : (
+                  <div>
+                    <p className="text-xs font-semibold text-ink-subtle uppercase tracking-widest mb-0.5">WhatsApp / Phone</p>
+                    <p className="text-sm font-medium text-ink">{profile?.phone || 'Not set (Required for communication)'}</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {isEditingPhone ? (
+                  <>
+                    <button onClick={() => setIsEditingPhone(false)} className="p-2 text-ink-muted hover:text-ink transition-colors">
+                      <X size={16} />
+                    </button>
+                    <button onClick={handleUpdatePhone} disabled={saving === 'phone'} className="btn-primary py-1.5 px-3 text-xs flex items-center gap-2">
+                      {saving === 'phone' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      Update
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => setIsEditingPhone(true)} className="p-2 text-ink-muted hover:text-violet-400 transition-all">
                     <Edit2 size={16} />
                   </button>
                 )}

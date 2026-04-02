@@ -6,6 +6,7 @@ import {
   Search, Filter, Clock, Users, Zap, X, Plus,
   ChevronDown, Briefcase, BookOpen, AlertCircle, Check,
   IndianRupee, Calendar, Tag, Paperclip, FileText, MapPin,
+  Smartphone
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
@@ -150,12 +151,19 @@ function PostGigModal({ onClose, onSubmit }) {
     urgency: 'standard',
     deadline: '',
     question: '',
-    delivery_address: '', // New Field
-    delivery_type: 'national', // New Field
+    delivery_address: '',
+    delivery_type: 'digital',
+    phone: '',
     attachment: null,
   });
-  const [loading, setLoading] = useState(false);
   const [showUPIModal, setShowUPIModal] = useState(false);
+  const { profile } = useAuth();
+
+  useEffect(() => {
+    if (profile?.phone) {
+      setForm(prev => ({ ...prev, phone: profile.phone }));
+    }
+  }, [profile]);
 
   const pricing = calculateGigPrice(form.pages, form.urgency, form.delivery_type);
 
@@ -306,11 +314,26 @@ function PostGigModal({ onClose, onSubmit }) {
             />
           </div>
 
+          {/* WhatsApp / Phone Number */}
+          <div>
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-widest mb-2 flex items-center gap-2">
+              <Smartphone size={13} className="text-violet-400" />
+              Your WhatsApp / Phone Number
+            </label>
+            <input
+              className="input-field"
+              placeholder="+91 00000 00000"
+              value={form.phone}
+              onChange={e => handleChange('phone', e.target.value)}
+              required
+            />
+          </div>
+
           {/* Delivery Address */}
           <div>
             <label className="block text-xs font-semibold text-link-muted uppercase tracking-widest mb-2 flex items-center gap-2">
               <MapPin size={13} className="text-violet-400" />
-              {form.delivery_type === 'digital' ? 'WhatsApp Number / Email' : 'Delivery Address'} (Visible only to assigned writer)
+              {form.delivery_type === 'digital' ? 'Delivery Details (Email/WhatsApp)' : 'Physical Delivery Address'} (Visible only to assigned writer)
             </label>
             <textarea
               className="input-field resize-none bg-gold-400/5 focus:bg-gold-400/10"
@@ -475,7 +498,7 @@ function PostGigModal({ onClose, onSubmit }) {
                 <span className="text-ink font-medium">₹{pricing.base}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-ink-muted">Standard Delivery</span>
+                <span className="text-ink-muted">{form.delivery_type === 'digital' ? 'Digital Handling Fee' : 'Courier & Logistics Fee'}</span>
                 <span className="text-ink font-medium">₹{pricing.deliveryCharge}</span>
               </div>
               <div className="flex justify-between text-xs">

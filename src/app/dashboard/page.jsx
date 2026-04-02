@@ -8,7 +8,8 @@ import {
   Zap, PenTool, FileText, Globe, ChevronRight,
   IndianRupee, CheckCircle, Timer, Award, Check,
   X, Truck, Paperclip, MapPin, ExternalLink, Users,
-  ShieldCheck, AlertTriangle, Eye, ThumbsUp, ThumbsDown, Sparkles, Layers
+  ShieldCheck, AlertTriangle, Eye, ThumbsUp, ThumbsDown, Sparkles, Layers,
+  Smartphone
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
@@ -100,9 +101,17 @@ function WriterDashboard({ user }) {
                   <p className="text-sm font-semibold text-ink mb-1">{gig.title}</p>
                   <p className="text-[10px] text-ink-muted uppercase tracking-wider">{gig.subject} • {gig.pages} pages</p>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gold-400">
-                  <MapPin size={12} />
-                  <span className="truncate">{gig.delivery_address}</span>
+                <div className="flex flex-col gap-1.5 text-[11px] text-gold-400">
+                  <div className="flex items-center gap-2">
+                    <MapPin size={12} />
+                    <span className="truncate">{gig.delivery_address}</span>
+                  </div>
+                  {gig.customer_phone && (
+                    <div className="flex items-center gap-2 text-emerald-400">
+                      <Smartphone size={12} />
+                      <span>Customer: {gig.customer_phone}</span>
+                    </div>
+                  )}
                 </div>
                 <Button variant="primary" size="sm" className="w-full justify-center" onClick={() => setShowDeliverModal(gig)}>
                   Mark as Delivered
@@ -293,6 +302,11 @@ function CustomerDashboard({ user }) {
                   <div className="flex items-center gap-6">
                     <div className="text-right">
                       <p className="font-display font-800 text-ink">₹{gig.price}</p>
+                      {gig.writerPhone && gig.status === 'in-progress' && (
+                        <p className="text-[10px] text-emerald-400 font-bold flex items-center justify-end gap-1">
+                          <Smartphone size={10} /> {gig.writerPhone}
+                        </p>
+                      )}
                       <p className="text-[10px] text-ink-subtle">{gig.delivery_type} delivery</p>
                     </div>
                     {gig.status === 'open' && (
