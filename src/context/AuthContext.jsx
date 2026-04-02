@@ -133,8 +133,15 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    toast.success('Signed out');
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      if (typeof window !== 'undefined') localStorage.removeItem('sh_profile');
+      toast.success('Signed out');
+    } catch (err) {
+      console.error('Sign out error:', err);
+    }
   }, []);
 
   const updateProfile = useCallback(async (updates) => {

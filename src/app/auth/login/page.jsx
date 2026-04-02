@@ -35,11 +35,7 @@ export default function LoginPage() {
     }
   };
 
-  const fillDemo = (role) => {
-    setEmail(role === 'writer' ? 'writer@demo.com' : 'customer@demo.com');
-    setPassword('demo1234');
-    setLocalError('');
-  };
+
 
   return (
     <div className="min-h-screen bg-void flex flex-col">
@@ -86,24 +82,7 @@ export default function LoginPage() {
             <p className="text-ink-muted text-sm">Sign in to your account to continue</p>
           </div>
 
-          {/* Demo Buttons */}
-          <div className="glass-card rounded-2xl p-4 mb-6 border border-violet-500/15">
-            <p className="text-xs text-ink-muted mb-3 text-center font-medium">⚡ Quick Demo Access</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => fillDemo('writer')}
-                className="py-2.5 px-3 rounded-xl bg-gold-500/10 border border-gold-500/20 text-gold-400 text-xs font-semibold hover:bg-gold-500/15 transition-all font-display"
-              >
-                Writer Demo
-              </button>
-              <button
-                onClick={() => fillDemo('customer')}
-                className="py-2.5 px-3 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-semibold hover:bg-violet-500/15 transition-all font-display"
-              >
-                Customer Demo
-              </button>
-            </div>
-          </div>
+
 
           {/* Form */}
           <div className="glass-card rounded-3xl p-8 border border-glass-border shadow-premium">

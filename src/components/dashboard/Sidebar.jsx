@@ -118,7 +118,7 @@ export default function DashboardSidebar() {
 
       {/* Bottom */}
       <div className="px-3 pb-6 space-y-1 border-t border-glass-border pt-4">
-        <Link href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink-muted hover:text-ink hover:bg-glass transition-all">
+        <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink-muted hover:text-ink hover:bg-glass transition-all">
           <Settings size={16} className="text-ink-subtle" />
           Settings
         </Link>

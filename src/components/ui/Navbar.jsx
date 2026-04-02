@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, Zap, ChevronDown, Bell, User,
   LogOut, LayoutDashboard, BookOpen, Briefcase,
-  FileText, Globe,
+  FileText, Globe, Settings
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -156,10 +156,14 @@ export default function Navbar() {
                             <FileText size={15} />
                             Resume Builder
                           </Link>
-                          <Link href="/dashboard/portfolio" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink-muted hover:text-ink hover:bg-glass transition-all">
+                          <Link href="/dashboard/portfolio" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink-muted hover:text-ink hover:bg-glass transition-all border-b border-glass-border">
                             <Globe size={15} />
                             Portfolio
                           </Link>
+                          <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink-muted hover:text-ink hover:bg-glass transition-all">
+                             <Settings size={15} />
+                             Settings
+                           </Link>
                         </div>
                         <div className="p-2 border-t border-glass-border">
                           <button
