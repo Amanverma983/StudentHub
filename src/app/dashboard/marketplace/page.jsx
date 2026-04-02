@@ -11,7 +11,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
 import { formatCurrency, timeAgo, SUBJECTS, calculateGigPrice, RATES, DELIVERY_CHARGE } from '@/lib/utils';
 import { createClient } from '@/lib/supabase';
-import { initializeRazorpayPayment } from '@/lib/payments';
 import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 import UPIPaymentModal from '@/components/marketplace/UPIPaymentModal';
