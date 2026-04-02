@@ -29,7 +29,7 @@ const CUSTOMER_NAV = [
 ];
 
 export default function DashboardSidebar() {
-  const { user, profile, signOut, isWriter } = useAuth();
+  const { user, profile, signOut, isWriter, isAdmin } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const navLinks = isWriter ? WRITER_NAV : CUSTOMER_NAV;
@@ -66,7 +66,7 @@ export default function DashboardSidebar() {
             )}
           </div>
           <div className="min-w-0">
-            <p className="font-display font-600 text-sm text-ink truncate">{user?.name}</p>
+            <p className="font-display font-600 text-sm text-ink truncate">{profile?.name || 'User'}</p>
             <div className={cn('mt-0.5', isWriter ? 'badge-gold' : 'badge-violet')} style={{ fontSize: '10px', padding: '2px 8px' }}>
               {isWriter ? '✦ Writer' : '◈ Customer'}
             </div>
@@ -77,13 +77,13 @@ export default function DashboardSidebar() {
           <div className="mt-3 pt-3 border-t border-glass-border flex items-center justify-between">
             <div>
               <p className="text-xs text-ink-muted">Earned</p>
-              <p className="text-sm font-display font-600 gradient-text-gold">{formatCurrency(user?.totalEarnings || 0)}</p>
+              <p className="text-sm font-display font-600 gradient-text-gold">{formatCurrency(profile?.total_earnings || 0)}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-ink-muted">Rating</p>
               <div className="flex items-center gap-1">
                 <Star size={11} className="text-gold-400" fill="currentColor" />
-                <p className="text-sm font-display font-600 text-ink">{user?.rating || '–'}</p>
+                <p className="text-sm font-display font-600 text-ink">{profile?.rating || '–'}</p>
               </div>
             </div>
           </div>
