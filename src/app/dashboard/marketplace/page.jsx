@@ -156,6 +156,7 @@ function PostGigModal({ onClose, onSubmit }) {
     phone: '',
     attachment: null,
   });
+  const [loading, setLoading] = useState(false);
   const [showUPIModal, setShowUPIModal] = useState(false);
   const { profile } = useAuth();
 
