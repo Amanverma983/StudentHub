@@ -86,10 +86,13 @@ export function MarketplaceProvider({ children }) {
           attachment_url: gigData.attachment_url || null,
           delivery_address: gigData.delivery_address,
           delivery_type: gigData.delivery_type || 'national',
-          payment_status: 'pending_verification', // New field
+          payment_status: 'pending_verification',
           payment_proof_url: gigData.payment_proof_url || null,
           transaction_id: gigData.transaction_id || null,
           customer_phone: gigData.phone || null,
+          base_price: gigData.base_price || 0,
+          service_fee: gigData.service_fee || 0,
+          delivery_charge: gigData.delivery_charge || 0,
         }])
         .select()
         .single();
@@ -229,13 +232,17 @@ export function MarketplaceProvider({ children }) {
       // 1. Get Gig Details (Price & Writer ID)
       const { data: gig, error: fetchErr } = await supabase
         .from('gigs')
-        .select('price, assigned_to')
+        .select('price, assigned_to, service_fee')
         .eq('id', gigId)
         .single();
 
       if (fetchErr) throw fetchErr;
 
-      const writerShare = Math.floor(gig.price * 0.9); // 90% to writer, 10% to admin
+      // WRITER PAYOUT LOGIC:
+      // Writer gets (Total Price - Platform Service Fee)
+      // This ensures they get 100% of the delivery fee + 90% of the assignment work.
+      const serviceFee = gig.service_fee || Math.round(gig.price * 0.1);
+      const writerShare = gig.price - serviceFee;
 
       // 2. Mark Gig as Completed
       const { error: gigErr } = await supabase

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
-import { formatCurrency, timeAgo, SUBJECTS, calculateGigPrice, RATES, DELIVERY_CHARGE } from '@/lib/utils';
+import { formatCurrency, timeAgo, SUBJECTS, calculateGigPrice, RATES, DELIVERY_RATES } from '@/lib/utils';
 import { createClient } from '@/lib/supabase';
 import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
@@ -141,8 +141,11 @@ function GigCard({ gig, onApply, hasApplied, isWriter }) {
 
 // POST GIG MODAL
 function PostGigModal({ onClose, onSubmit }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const supabase = createClient();
+  const [loading, setLoading] = useState(false);
+  const [showUPIModal, setShowUPIModal] = useState(false);
+  
   const [form, setForm] = useState({
     title: '',
     subject: '',
@@ -156,9 +159,6 @@ function PostGigModal({ onClose, onSubmit }) {
     phone: '',
     attachment: null,
   });
-  const [loading, setLoading] = useState(false);
-  const [showUPIModal, setShowUPIModal] = useState(false);
-  const { profile } = useAuth();
 
   useEffect(() => {
     if (profile?.phone) {
@@ -221,7 +221,10 @@ function PostGigModal({ onClose, onSubmit }) {
       // 3. Post to Database with Payment Info
       await onSubmit({ 
         ...form, 
-        price: pricing.total, 
+        price: pricing.total,
+        base_price: pricing.base,
+        delivery_charge: pricing.deliveryCharge,
+        service_fee: pricing.serviceFee,
         attachment_url: attachmentUrl,
         delivery_type: form.delivery_type,
         payment_proof_url: proofUrl,
