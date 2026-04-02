@@ -22,8 +22,8 @@ export function AuthProvider({ children }) {
         try {
           const parsed = JSON.parse(cachedProfile);
           setProfile(parsed);
-          // If we have a cached profile, we can show the dashboard sooner
-          // but we still wait for auth verification to be safe
+          setLoading(false);
+          // If we have a cached profile, we can show the dashboard immediately
         } catch (e) {
           localStorage.removeItem('sh_profile');
         }
