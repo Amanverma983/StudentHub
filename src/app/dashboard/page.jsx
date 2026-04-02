@@ -374,80 +374,112 @@ function CustomerDashboard({ user }) {
 }
 
 function AdminDashboard({ user }) {
-  const { gigs, verifyGigPayment } = useMarketplace();
-  const pendingPayments = gigs.filter(g => g.payment_status === 'pending_verification');
+  const { gigs, verifyGigPayment, themeRequests, verifyThemeUnlock } = useMarketplace();
+  const [activeTab, setActiveTab] = useState('gigs');
   const [selectedProof, setSelectedProof] = useState(null);
 
+  const pendingGigs = gigs.filter(g => g.payment_status === 'pending_verification');
+  const pendingThemes = (themeRequests || []).filter(t => t.status === 'pending');
+
   const stats = [
-    { label: 'Pending Verifications', value: pendingPayments.length, icon: AlertTriangle, color: 'text-gold-400', bg: 'bg-gold-500/10' },
-    { label: 'Total Gigs', value: gigs.length, icon: Briefcase, color: 'text-violet-400', bg: 'bg-violet-500/10' },
+    { label: 'Pending Gigs', value: pendingGigs.length, icon: Briefcase, color: 'text-violet-400', bg: 'bg-violet-500/10' },
+    { label: 'Theme Requests', value: pendingThemes.length, icon: Sparkles, color: 'text-gold-400', bg: 'bg-gold-500/10' },
+    { label: 'Total Gigs', value: gigs.length, icon: Layers, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
   ];
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-800 text-ink tracking-tight">Admin <span className="text-violet-500">Panel</span></h1>
-          <p className="text-sm text-ink-muted">Verify incoming UPI manual payments</p>
+          <p className="text-xs font-bold text-violet-400 uppercase tracking-widest mb-1">Central Command</p>
+          <h1 className="font-display text-4xl font-900 text-ink tracking-tight">Admin <span className="gradient-text-gold">Dashboard</span></h1>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map(stat => (
-          <div key={stat.label} className="stat-card border border-glass-border">
-            <div className={`w-9 h-9 rounded-xl ${stat.bg} flex items-center justify-center mb-3`}>
-              <stat.icon size={17} className={stat.color} />
+          <div key={stat.label} className="glass-card p-6 border border-glass-border">
+            <div className={`w-10 h-10 rounded-2xl ${stat.bg} flex items-center justify-center mb-4 border border-glass-border`}>
+              <stat.icon size={18} className={stat.color} />
             </div>
-            <div className={`font-display text-2xl font-800 mb-1 ${stat.color}`}>{stat.value}</div>
-            <p className="text-xs text-ink-muted">{stat.label}</p>
+            <div className={`font-display text-3xl font-800 mb-1 ${stat.color}`}>{stat.value}</div>
+            <p className="text-xs text-ink-muted uppercase font-bold tracking-wider">{stat.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Verification Queue */}
-      <div className="glass-card rounded-3xl p-6 border border-glass-border">
-        <h2 className="font-display font-600 text-ink mb-6 flex items-center gap-2">
-          <ShieldCheck size={20} className="text-emerald-400" />
-          Verification Queue
-        </h2>
-
-        {pendingPayments.length === 0 ? (
-          <div className="py-12 text-center bg-void/20 rounded-2xl border border-dashed border-glass-border">
-            <div className="w-12 h-12 rounded-full bg-glass flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={24} className="text-ink-subtle" />
-            </div>
-            <p className="text-ink-muted text-sm font-medium">All caught up! No pending payments.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {pendingPayments.map(gig => (
-              <div key={gig.id} className="p-5 rounded-2xl bg-void/40 border border-glass-border flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-violet-400 bg-violet-400/10 px-2 py-0.5 rounded">ID: {gig.id.slice(0,8)}</span>
-                    <span className="text-[10px] font-bold text-ink-subtle italic">{timeAgo(gig.created_at)}</span>
-                  </div>
-                  <h3 className="text-sm font-bold text-ink mb-1">{gig.title}</h3>
-                  <p className="text-xs text-ink-muted">Amount: <span className="text-gold-400 font-bold">₹{gig.price}</span> • Transaction: <span className="text-ink font-mono">{gig.transaction_id || 'N/A'}</span></p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {gig.payment_proof_url && (
-                    <Button variant="secondary" size="sm" className="gap-2" onClick={() => setSelectedProof(gig.payment_proof_url)}>
-                      <Eye size={14} /> View Proof
-                    </Button>
-                  )}
-                  <Button variant="gold" size="sm" className="bg-emerald-600 hover:bg-emerald-500 border-none gap-2" onClick={() => verifyGigPayment(gig.id, 'paid')}>
-                    <ThumbsUp size={14} /> Approve
-                  </Button>
-                  <Button variant="secondary" size="sm" className="text-red-400 border-red-500/20 hover:bg-red-500/10 gap-2" onClick={() => verifyGigPayment(gig.id, 'rejected')}>
-                    <ThumbsDown size={14} /> Reject
-                  </Button>
-                </div>
-              </div>
+      {/* Verification Tabs */}
+      <div className="glass-card rounded-[2.5rem] p-8 border border-glass-border">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex gap-2 p-1 bg-void/50 rounded-2xl border border-glass-border">
+            {[
+              { id: 'gigs', label: 'Gig Payments', count: pendingGigs.length },
+              { id: 'themes', label: 'Theme Unlocks', count: pendingThemes.length },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeTab === tab.id 
+                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20' 
+                    : 'text-ink-subtle hover:text-ink'
+                }`}
+              >
+                {tab.label}
+                {tab.count > 0 && <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full animate-pulse">{tab.count}</span>}
+              </button>
             ))}
           </div>
-        )}
+          <h2 className="font-display font-700 text-ink flex items-center gap-2 opacity-60">
+            <ShieldCheck size={18} className="text-emerald-400" />
+            Verification Queue
+          </h2>
+        </div>
+
+        <div className="space-y-4">
+          {activeTab === 'gigs' ? (
+            pendingGigs.length === 0 ? (
+              <EmptyQueue message="No pending gig payments" />
+            ) : (
+              pendingGigs.map(gig => (
+                <VerificationCard 
+                  key={gig.id}
+                  id={gig.id}
+                  title={gig.title}
+                  amount={gig.price}
+                  user={gig.profiles?.name}
+                  txnId={gig.transaction_id}
+                  proof={gig.payment_proof_url}
+                  time={gig.created_at}
+                  onApprove={() => verifyGigPayment(gig.id, 'paid')}
+                  onReject={() => verifyGigPayment(gig.id, 'rejected')}
+                  onViewProof={setSelectedProof}
+                />
+              ))
+            )
+          ) : (
+            pendingThemes.length === 0 ? (
+              <EmptyQueue message="No pending theme unlocks" />
+            ) : (
+              pendingThemes.map(req => (
+                <VerificationCard 
+                  key={req.id}
+                  id={req.id}
+                  title={`Unlock: ${req.theme_id}`}
+                  amount={req.amount}
+                  user={req.profiles?.name}
+                  txnId={req.transaction_id}
+                  proof={req.payment_proof_url}
+                  time={req.created_at}
+                  onApprove={() => verifyThemeUnlock(req.id, req.user_id, req.theme_id, 'approved')}
+                  onReject={() => verifyThemeUnlock(req.id, req.user_id, req.theme_id, 'rejected')}
+                  onViewProof={setSelectedProof}
+                />
+              ))
+            )
+          )}
+        </div>
       </div>
 
       {/* Proof Modal */}
@@ -455,13 +487,80 @@ function AdminDashboard({ user }) {
         {selectedProof && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-void/90 backdrop-blur-md" onClick={() => setSelectedProof(null)} />
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="relative max-w-2xl w-full glass-card rounded-[2.5rem] p-4 border border-glass-border">
-              <button onClick={() => setSelectedProof(null)} className="absolute -top-4 -right-4 p-3 rounded-full bg-violet-600 text-white shadow-xl z-20"><X size={20} /></button>
-              <img src={selectedProof} alt="Payment Proof" className="w-full h-auto rounded-3xl" />
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative max-w-2xl w-full glass-card rounded-[3rem] p-4 border border-glass-border shadow-3xl">
+              <button 
+                onClick={() => setSelectedProof(null)} 
+                className="absolute -top-4 -right-4 p-4 rounded-full bg-violet-600 text-white shadow-2xl z-20 hover:scale-110 transition-transform active:scale-95"
+              >
+                <X size={20} />
+              </button>
+              <div className="rounded-[2.5rem] overflow-hidden bg-void">
+                <img src={selectedProof} alt="Payment Proof" className="w-full h-auto" />
+              </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Sub-components for cleaner structure
+function VerificationCard({ title, amount, user, txnId, proof, time, onApprove, onReject, onViewProof }) {
+  return (
+    <div className="p-6 rounded-3xl bg-void/40 border border-glass-border hover:border-violet-500/20 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group">
+      <div className="flex-1">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-violet-400 bg-violet-400/10 px-2.5 py-1 rounded-lg border border-violet-400/20">Payment Approval</span>
+          <span className="text-[10px] font-bold text-ink-subtle italic flex items-center gap-1">
+            <Clock size={10} /> {timeAgo(time || new Date())}
+          </span>
+        </div>
+        <h3 className="text-base font-bold text-ink mb-1 group-hover:text-white transition-colors">{title}</h3>
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          <p className="text-xs text-ink-muted">By: <span className="text-ink font-semibold">{user || 'Anonymous'}</span></p>
+          <p className="text-xs text-ink-muted">Amount: <span className="text-gold-400 font-black">₹{amount}</span></p>
+          <p className="text-xs text-ink-muted">Txn ID: <span className="text-sky-400 font-mono font-bold tracking-tight">{txnId || 'N/A'}</span></p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 shrink-0">
+        {proof && (
+          <button 
+            onClick={() => onViewProof(proof)}
+            className="p-3 rounded-2xl bg-glass border border-glass-border text-ink-subtle hover:text-white hover:bg-glass transition-all h-12 w-12 flex items-center justify-center group/btn"
+            title="View Proof"
+          >
+            <Eye size={18} className="group-hover/btn:scale-110 transition-transform" />
+          </button>
+        )}
+        <button 
+          onClick={onReject}
+          className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all h-12 w-12 flex items-center justify-center group/btn"
+          title="Reject Payment"
+        >
+          <ThumbsDown size={18} className="group-hover/btn:scale-110 transition-transform" />
+        </button>
+        <button 
+          onClick={onApprove}
+          className="flex-1 md:flex-none px-6 py-3 rounded-2xl bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 hover:-translate-y-0.5 transition-all h-12 flex items-center gap-2"
+        >
+          <ThumbsUp size={16} />
+          Approve Now
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EmptyQueue({ message }) {
+  return (
+    <div className="py-16 text-center bg-void/20 rounded-3xl border border-dashed border-glass-border">
+      <div className="w-16 h-16 rounded-full bg-glass flex items-center justify-center mx-auto mb-4 border border-glass-border">
+        <CheckCircle size={24} className="text-emerald-400/50" />
+      </div>
+      <p className="text-ink-muted text-sm font-semibold tracking-wide">{message}</p>
+      <p className="text-[10px] text-ink-subtle uppercase tracking-widest mt-1">Status: All Clear</p>
     </div>
   );
 }

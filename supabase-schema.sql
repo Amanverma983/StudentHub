@@ -23,6 +23,9 @@ create table public.profiles (
   linkedin_url text,
   github_url text,
   website_url text,
+  wallet_balance integer default 0,
+  payout_info jsonb default '{}',
+  is_admin boolean default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -37,7 +40,14 @@ create table public.gigs (
   price integer not null check (price > 0),
   deadline timestamptz not null,
   urgency text not null check (urgency in ('standard', 'urgent', 'express')),
-  status text not null default 'open' check (status in ('open', 'in-progress', 'completed', 'cancelled')),
+  status text not null default 'open' check (status in ('open', 'in-progress', 'completed', 'cancelled', 'rejected')),
+  payment_status text default 'pending_verification' check (payment_status in ('pending_verification', 'paid', 'rejected')),
+  payment_proof_url text,
+  transaction_id text,
+  delivery_address text,
+  delivery_type text default 'national' check (delivery_type in ('local', 'regional', 'national')),
+  delivery_proof_url text,
+  tracking_id text,
   customer_id uuid references public.profiles(id) on delete cascade not null,
   assigned_to uuid references public.profiles(id),
   tags text[] default '{}',
@@ -94,6 +104,17 @@ create table public.reviews (
   created_at timestamptz default now()
 );
 
+-- ─── Payout Requests ──────────────────────────────────────────
+create table public.payout_requests (
+  id uuid default uuid_generate_v4() primary key,
+  writer_id uuid references public.profiles(id) on delete cascade not null,
+  amount integer not null check (amount > 0),
+  payout_method text not null,
+  status text default 'pending' check (status in ('pending', 'completed', 'cancelled')),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- ─── Row Level Security ───────────────────────────────────────
 alter table public.profiles enable row level security;
 alter table public.gigs enable row level security;
@@ -101,6 +122,7 @@ alter table public.gig_applications enable row level security;
 alter table public.resumes enable row level security;
 alter table public.portfolios enable row level security;
 alter table public.reviews enable row level security;
+alter table public.payout_requests enable row level security;
 
 -- Profiles: public read, own write
 create policy "Profiles are publicly readable" on public.profiles for select using (true);
@@ -126,6 +148,10 @@ create policy "Users can manage own resumes" on public.resumes for all using (au
 -- Portfolios: public read if published, own write
 create policy "Published portfolios are public" on public.portfolios for select using (is_published = true or auth.uid() = user_id);
 create policy "Users can manage own portfolio" on public.portfolios for all using (auth.uid() = user_id);
+
+-- Payouts: writers only
+create policy "Writers can view own payout requests" on public.payout_requests for select using (auth.uid() = writer_id);
+create policy "Writers can insert own payout requests" on public.payout_requests for insert with check (auth.uid() = writer_id);
 
 -- ─── Functions ────────────────────────────────────────────────
 
@@ -161,6 +187,20 @@ create trigger handle_profiles_updated_at before update on public.profiles for e
 create trigger handle_gigs_updated_at before update on public.gigs for each row execute procedure public.handle_updated_at();
 create trigger handle_resumes_updated_at before update on public.resumes for each row execute procedure public.handle_updated_at();
 create trigger handle_portfolios_updated_at before update on public.portfolios for each row execute procedure public.handle_updated_at();
+create trigger handle_payout_requests_updated_at before update on public.payout_requests for each row execute procedure public.handle_updated_at();
+
+-- Atomic Balance Increment RPC (Safe Payouts)
+create or replace function public.increment_writer_balance(writer_id uuid, amount integer)
+returns void as $$
+begin
+  update public.profiles
+  set 
+    wallet_balance = coalesce(wallet_balance, 0) + amount,
+    total_earnings = coalesce(total_earnings, 0) + amount,
+    completed_gigs = coalesce(completed_gigs, 0) + 1
+  where id = writer_id;
+end;
+$$ language plpgsql security definer;
 
 -- ─── Indexes ──────────────────────────────────────────────────
 create index idx_gigs_status on public.gigs(status);

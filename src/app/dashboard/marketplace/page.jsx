@@ -462,7 +462,7 @@ function PostGigModal({ onClose, onSubmit }) {
             <div className="flex justify-between items-center mb-4 pb-4 border-b border-glass-border">
               <div>
                 <p className="text-xs text-ink-muted uppercase tracking-wider font-semibold">Payment Breakdown</p>
-                <p className="text-[10px] text-ink-subtle mt-0.5">Secure payment via Razorpay / Card / UPI</p>
+                <p className="text-[10px] text-ink-subtle mt-0.5">Secure direct UPI payment for verification</p>
               </div>
               <Zap size={16} className="text-gold-400 animate-pulse" />
             </div>

@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 
 const ADMIN_UPI = process.env.NEXT_PUBLIC_ADMIN_UPI_ID || '9838807489@ptyes';
 
-export default function UPIPaymentModal({ amount, gigTitle, onClose, onPaymentComplete }) {
+export default function UPIPaymentModal({ amount, gigTitle, note, onClose, onPaymentComplete }) {
   const { uploadPaymentProof } = useMarketplace();
   const [proof, setProof] = useState(null);
   const [transactionId, setTransactionId] = useState('');
@@ -21,7 +21,8 @@ export default function UPIPaymentModal({ amount, gigTitle, onClose, onPaymentCo
   const [isCopied, setIsCopied] = useState(false);
 
   // Generate UPI URI
-  const upiUri = `upi://pay?pa=${ADMIN_UPI}&pn=StudentHub&am=${amount}&tn=Assignment Payment for ${gigTitle.slice(0, 20)}&cu=INR`;
+  const paymentNote = note || `Payment for ${gigTitle?.slice(0, 20) || 'StudentHub'}`;
+  const upiUri = `upi://pay?pa=${ADMIN_UPI}&pn=StudentHub&am=${amount}&tn=${encodeURIComponent(paymentNote)}&cu=INR`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUri)}`;
 
   const handleCopyUPI = () => {

@@ -20,7 +20,7 @@ const LEGAL_CONTENT = {
       Users must provide accurate information. Brand ownership is held by Aman Verma.
 
       ### 3. Payments and Commissions
-      Payments are processed through Razorpay. A platform commission of 10% is charged on all completed assignments.
+      Payments are processed through Manual UPI Transfer. A platform commission of 10% is charged on all completed assignments.
 
       ### 4. Code of Conduct
       Academic integrity is the user's responsibility. Content provided should be for reference or guidance only.
@@ -40,7 +40,7 @@ const LEGAL_CONTENT = {
       Your data is used to facilitate marketplace transactions and improve student services.
 
       ### 3. Data Protection
-      We use 256-bit encryption for data security. Payments are handled via Razorpay’s secure gateway.
+      We use 256-bit encryption for data security. Payments are handled via Manual UPI Transfer’s secure gateway.
     `
   },
   refund: {
@@ -57,7 +57,7 @@ const LEGAL_CONTENT = {
       Refunds are processed only if a Writer fails to deliver on time or if the quality is found to be significantly below the requirements.
 
       ### 3. Processing Time
-      Refunds are processed within 5-7 business days to the original payment source via Razorpay.
+      Refunds are processed within 5-7 business days to the original payment source via Manual UPI Transfer.
     `
   },
   contact: {

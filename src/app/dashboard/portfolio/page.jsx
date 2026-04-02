@@ -11,7 +11,7 @@ import { Globe, Palette, Eye, Check, Plus, Trash2, ExternalLink,
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase';
-import { initializeRazorpayPayment } from '@/lib/payments';
+import UPIPaymentModal from '@/components/marketplace/UPIPaymentModal';
 import toast from 'react-hot-toast';
 
 const THEMES = [
@@ -377,6 +377,8 @@ export default function PortfolioPage() {
   const [unlockedThemes, setUnlockedThemes] = useState(user?.unlocked_themes || []);
   const [unlocking, setUnlocking] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showUPIModal, setShowUPIModal] = useState(false);
+  const [upiModalData, setUpiModalData] = useState({ amount: 0, note: '', themeId: '' });
 
   // Sync unlocked themes
   useEffect(() => {
@@ -424,27 +426,13 @@ export default function PortfolioPage() {
     const isLocked = currentTheme?.premium && !unlockedThemes.includes(theme);
 
     if (isLocked) {
-      setUnlocking(true);
-      try {
-        const paymentId = await initializeRazorpayPayment({
-          amount: currentTheme.price * 100,
-          name: 'Portfolio Template Unlock',
-          email: user.email,
-          description: `Unlock ${currentTheme.name} to Publish`,
-        });
-
-        if (paymentId) {
-          const newUnlocked = [...unlockedThemes, theme];
-          await supabase.from('profiles').update({ unlocked_themes: newUnlocked }).eq('id', user.id);
-          setUnlockedThemes(newUnlocked);
-          toast.success('Theme Unlocked! Publishing...');
-        } else return;
-      } catch (err) {
-        toast.error('Payment failed');
-        return;
-      } finally {
-        setUnlocking(false);
-      }
+      setUpiModalData({ 
+        amount: currentTheme.price, 
+        note: `Unlock Theme: ${currentTheme.name}`,
+        themeId: theme 
+      });
+      setShowUPIModal(true);
+      return;
     }
 
     setPublishing(true);
@@ -461,28 +449,13 @@ export default function PortfolioPage() {
     const isLocked = currentTheme?.premium && !unlockedThemes.includes(theme);
 
     if (isLocked) {
-      setUnlocking(true);
-      try {
-        const paymentId = await initializeRazorpayPayment({
-          amount: currentTheme.price * 100,
-          name: 'Portfolio Source Code',
-          email: user.email,
-          description: `Unlock ${currentTheme.name} Source Code`,
-        });
-
-        if (paymentId) {
-          const newUnlocked = [...unlockedThemes, theme];
-          await supabase.from('profiles').update({ unlocked_themes: newUnlocked }).eq('id', user.id);
-          setUnlockedThemes(newUnlocked);
-          toast.success('Theme Unlocked! Accessing Code...');
-          setShowCodeModal(true);
-        } else return;
-      } catch (err) {
-        toast.error('Payment failed');
-        return;
-      } finally {
-        setUnlocking(false);
-      }
+      setUpiModalData({ 
+        amount: currentTheme.price, 
+        note: `Unlock Code: ${currentTheme.name}`,
+        themeId: theme 
+      });
+      setShowUPIModal(true);
+      return;
     } else {
       setShowCodeModal(true);
     }
@@ -516,29 +489,39 @@ export default function Portfolio() {
   };
 
   const handleUnlockBundle = async () => {
+    setUpiModalData({ 
+      amount: 499, 
+      note: 'Unlock 3D Template Bundle',
+      themeId: 'bundle' 
+    });
+    setShowUPIModal(true);
+  };
+
+  const update = (field, value) => setData(prev => ({ ...prev, [field]: value }));
+
+  const handlePaymentSuccess = async (proofUrl, transactionId) => {
     setUnlocking(true);
     try {
-      const paymentId = await initializeRazorpayPayment({
-        amount: 499 * 100,
-        name: '3D Template Bundle',
-        email: user.email,
-        description: 'Unlock ALL Premium 3D Templates',
-      });
+      // Create a theme unlock request in database
+      const { error } = await supabase.from('theme_unlock_requests').insert([{
+        user_id: user.id,
+        theme_id: upiModalData.themeId,
+        amount: upiModalData.amount,
+        payment_proof_url: proofUrl,
+        transaction_id: transactionId,
+        status: 'pending'
+      }]);
 
-      if (paymentId) {
-        const newUnlocked = [...unlockedThemes, '3d-glass', '3d-cyber'];
-        await supabase.from('profiles').update({ unlocked_themes: newUnlocked }).eq('id', user.id);
-        setUnlockedThemes(newUnlocked);
-        toast.success('3D Bundle unlocked! 🎉');
-      }
+      if (error) throw error;
+      
+      toast.success('Payment proof submitted! Admin will unlock this theme shortly.');
+      setShowUPIModal(false);
     } catch (err) {
-      toast.error('Payment failed');
+      toast.error('Failed to submit proof');
     } finally {
       setUnlocking(false);
     }
   };
-
-  const update = (field, value) => setData(prev => ({ ...prev, [field]: value }));
 
   const addSkill = () => {
     if (newSkill.trim()) {
@@ -894,6 +877,17 @@ export default function Portfolio() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+      {/* Portfolio Share Modal */}
+      <AnimatePresence>
+        {showUPIModal && (
+          <UPIPaymentModal
+            amount={upiModalData.amount}
+            note={upiModalData.note}
+            onClose={() => setShowUPIModal(false)}
+            onPaymentComplete={handlePaymentSuccess}
+          />
         )}
       </AnimatePresence>
     </div>
