@@ -79,6 +79,18 @@ const THEMES = [
       glow: 'rgba(0,255,255,0.5)',
     },
   },
+  {
+    id: 'anime-midnight',
+    name: 'Anime Midnight',
+    desc: 'Cyberpunk dark with neon pink & purple',
+    premium: true,
+    price: 299,
+    preview: {
+      bg: 'linear-gradient(135deg, #0B0E14 0%, #1A1A2E 100%)',
+      accent: '#FF0099',
+      glow: 'rgba(255,0,153,0.3)',
+    },
+  },
 ];
 
 const DEFAULT_PORTFOLIO = {
@@ -326,6 +338,95 @@ function Cyber3DPreview({ data }) {
   );
 }
 
+function AnimeMidnightPreview({ data }) {
+  return (
+    <div style={{ background: '#0B0E14', padding: '0', minHeight: '550px', position: 'relative', overflow: 'hidden', fontFamily: 'system-ui' }}>
+      {/* Anime-inspired background orbs */}
+      <div style={{ position: 'absolute', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(255,0,153,0.1) 0%, transparent 70%)', top: '-100px', right: '-100px', borderRadius: '50%' }} />
+      <div style={{ position: 'absolute', width: '250px', height: '250px', background: 'radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)', bottom: '50px', left: '-100px', borderRadius: '50%' }} />
+
+      {/* Persistent Floating Chat Bubble (FAB) */}
+      <div style={{ position: 'absolute', bottom: '20px', right: '20px', width: '48px', height: '48px', background: 'linear-gradient(to bottom right, #FF0099, #7C3AED)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 0 15px rgba(255,0,153,0.4)', zIndex: 10, cursor: 'pointer' }}>
+        <Mail size={20} />
+      </div>
+
+      {/* Hero Header */}
+      <div style={{ padding: '40px 24px', textAlign: 'center', position: 'relative' }}>
+        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'linear-gradient(45deg, #FF0099, #7C3AED)', margin: '0 auto 20px', padding: '3px', boxShadow: '0 0 20px rgba(255,0,153,0.3)' }}>
+          <div style={{ width: '100%', height: '100%', borderRadius: '22px', background: '#0B0E14', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: 'bold', color: '#F8F8FF', overflow: 'hidden' }}>
+            {data.avatar ? (
+              <img src={data.avatar} alt={data.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
+            ) : (
+              data.name[0]
+            )}
+          </div>
+        </div>
+        <h1 style={{ fontSize: '32px', fontWeight: '900', color: '#F8F8FF', marginBottom: '8px', letterSpacing: '-0.5px' }}>
+          {data.name.split(' ')[0]} <span style={{ background: 'linear-gradient(to right, #FF0099, #7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{data.name.split(' ').slice(1).join(' ')}</span>
+        </h1>
+        <p style={{ color: '#9BA3B5', fontSize: '14px', maxWidth: '300px', margin: '0 auto 24px', lineHeight: '1.5' }}>{data.tagline}</p>
+        
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+          <div style={{ background: 'linear-gradient(to right, #FF0099, #7C3AED)', padding: '1px', borderRadius: '12px' }}>
+            <div style={{ background: '#0B0E14', color: '#F8F8FF', padding: '8px 20px', borderRadius: '11px', fontSize: '13px', fontWeight: '700' }}>Contact Me</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Simple Stats Row */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', padding: '0 24px 32px' }}>
+        {data.stats.slice(0, 2).map((s, i) => (
+          <div key={i} style={{ textAlign: 'center' }}>
+            <div style={{ color: '#FF0099', fontSize: '20px', fontWeight: '900' }}>{s.value}</div>
+            <div style={{ color: '#9BA3B5', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Experience Bars Section */}
+      <div style={{ padding: '0 24px 32px' }}>
+        <p style={{ color: '#F8F8FF', fontSize: '12px', fontWeight: '800', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '1px' }}>Skill Mastery</p>
+        <div style={{ spaceY: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {data.skills.slice(0, 3).map((skill, i) => (
+            <div key={i}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ color: '#F8F8FF', fontSize: '11px', fontWeight: '600' }}>{skill}</span>
+                <span style={{ color: '#FF0099', fontSize: '11px', fontWeight: '700' }}>{85 - (i * 5)}%</span>
+              </div>
+              <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${85 - (i * 5)}%`, background: 'linear-gradient(to right, #FF0099, #7C3AED)', borderRadius: '100px' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Project Cards Section */}
+      <div style={{ padding: '0 24px 40px' }}>
+        <p style={{ color: '#F8F8FF', fontSize: '12px', fontWeight: '800', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '1px' }}>Top Case Studies</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {data.projects.slice(0, 2).map((proj, i) => (
+            <div key={i} style={{ background: '#131822', borderRadius: '20px', padding: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <h4 style={{ color: '#F8F8FF', fontSize: '14px', fontWeight: '700' }}>{proj.name}</h4>
+                <div style={{ color: '#FF0099', fontSize: '10px' }}>
+                  <Star size={10} fill="currentColor" /> {proj.stars}
+                </div>
+              </div>
+              <p style={{ color: '#9BA3B5', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>{proj.desc}</p>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {proj.tech.slice(0, 3).map((t, j) => (
+                  <span key={j} style={{ background: 'rgba(255,255,255,0.03)', color: '#FF0099', border: '1px solid rgba(255,0,153,0.1)', padding: '2px 8px', borderRadius: '6px', fontSize: '9px', fontWeight: '600' }}>{t}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const PREVIEW_COMPONENTS = {
   glassmorphism: GlassmorphismPreview,
   terminal: TerminalPreview,
@@ -333,6 +434,7 @@ const PREVIEW_COMPONENTS = {
   neon: NeonPreview,
   '3d-glass': Glass3DPreview,
   '3d-cyber': Cyber3DPreview,
+  'anime-midnight': AnimeMidnightPreview,
 };
 
 function Section({ title, icon: Icon, children, defaultOpen = true }) {
