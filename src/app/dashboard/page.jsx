@@ -171,7 +171,7 @@ function CustomerDashboard({ user }) {
   const { gigs, assignWriter } = useMarketplace();
   const [activeExpands, setActiveExpands] = useState({}); // { gigId: boolean }
   const [applicants, setApplicants] = useState({}); // { gigId: [] }
-  const myGigs = gigs.filter(g => g.customer_id === user.id);
+  const myGigs = (gigs || []).filter(g => g.customer_id === user?.id);
   const supabase = createClient();
 
   const fetchApplicants = async (gigId) => {
@@ -213,7 +213,7 @@ function CustomerDashboard({ user }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-sm text-ink-muted mb-1">Welcome back,</p>
-          <h1 className="font-display text-3xl font-800 text-ink">{user.name?.split(' ')[0]} 👋</h1>
+          <h1 className="font-display text-3xl font-800 text-ink">{user?.name?.split(' ')[0]} 👋</h1>
         </div>
         <Link href="/dashboard/marketplace" className="btn-primary text-sm px-5 py-2.5">
           <Zap size={15} />
@@ -566,8 +566,35 @@ function EmptyQueue({ message }) {
 }
 
 export default function DashboardPage() {
-  const { user, profile, isWriter, isAdmin } = useAuth();
+  const { user, profile, loading, isWriter, isAdmin } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-void">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-violet-600/30 border-t-violet-600 rounded-full animate-spin" />
+          <p className="text-ink-muted font-bold animate-pulse uppercase tracking-widest text-[10px]">Synchronizing Access</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) return null;
+  if (!profile) {
+    // If user is authenticated but profile is missing, something is wrong
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-void p-4">
+        <div className="glass-card p-8 rounded-[2.5rem] border border-glass-border max-w-md text-center">
+          <AlertTriangle size={48} className="text-amber-500 mx-auto mb-4" />
+          <h2 className="text-xl font-black text-ink mb-2">Profile Missing</h2>
+          <p className="text-sm text-ink-muted mb-6">We couldn't find your profile details. This might happen if your account was just created. Try refreshing.</p>
+          <button onClick={() => window.location.reload()} className="btn-primary w-full shadow-lg shadow-violet-600/20 py-4 rounded-2xl font-bold">
+            Refresh Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   if (isAdmin) return <AdminDashboard user={profile} />;
   return isWriter ? <WriterDashboard user={profile} /> : <CustomerDashboard user={profile} />;
