@@ -15,6 +15,31 @@ export function MarketplaceProvider({ children }) {
   const [themeRequests, setThemeRequests] = useState([]);
 
   // Fetch Gigs
+  const fetchGigs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('gigs')
+        .select(`
+          *,
+          profiles:customer_id(name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formatted = data.map(g => ({
+        ...g,
+        customerName: g.profiles?.name || 'User',
+        postedAt: g.created_at,
+      }));
+
+      setGigs(formatted);
+    } catch (err) {
+      console.error('Error fetching gigs:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // Fetch Theme Requests
@@ -101,6 +126,23 @@ export function MarketplaceProvider({ children }) {
     }
   };
 
+  const verifyGigPayment = useCallback(async (gigId, status = 'paid') => {
+    try {
+      const { error } = await supabase
+        .from('gigs')
+        .update({
+          payment_status: status,
+          status: status === 'paid' ? 'open' : 'rejected'
+        })
+        .eq('id', gigId);
+
+      if (error) throw error;
+
+      toast.success(status === 'paid' ? 'Payment Verified! Gig is now live.' : 'Payment Rejected.');
+      fetchGigs();
+    } catch (err) {
+      toast.error('Verification failed');
+    }
   }, [fetchGigs]);
 
   const verifyThemeUnlock = useCallback(async (requestId, userId, themeId, status = 'approved') => {
@@ -305,6 +347,10 @@ export function MarketplaceProvider({ children }) {
       filter,
       setFilter,
       postGig,
+      uploadPaymentProof,
+      verifyGigPayment,
+      applyToGig,
+      assignWriter,
       submitDelivery,
       getMyGigs,
       requestPayout,
