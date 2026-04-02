@@ -368,6 +368,53 @@ export function MarketplaceProvider({ children }) {
       updatePayoutInfo,
       themeRequests,
       verifyThemeUnlock,
+      fetchAllPayouts: async () => {
+        try {
+          const { data, error } = await supabase
+            .from('payout_requests')
+            .select(`
+              *,
+              writer:profiles!writer_id(name, email, payout_info)
+            `)
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          return data;
+        } catch (err) {
+          console.error(err);
+          return [];
+        }
+      },
+      confirmPayout: async (requestId) => {
+        try {
+          const { error } = await supabase
+            .from('payout_requests')
+            .update({ status: 'completed' })
+            .eq('id', requestId);
+          
+          if (error) throw error;
+          toast.success('Payout marked as completed!');
+          return true;
+        } catch (err) {
+          toast.error('Failed to update payout status');
+          return false;
+        }
+      },
+      fetchAllWriters: async () => {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('role', 'writer')
+            .order('total_earnings', { ascending: false });
+          
+          if (error) throw error;
+          return data;
+        } catch (err) {
+          console.error(err);
+          return [];
+        }
+      },
     }}>
       {children}
     </MarketplaceContext.Provider>

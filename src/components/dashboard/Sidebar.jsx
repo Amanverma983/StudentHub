@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, FileText, Globe,
   LogOut, Zap, PenTool, ShoppingBag, TrendingUp,
-  Settings, ChevronRight, Star, HelpCircle
+  Settings, ChevronRight, Star, HelpCircle, Banknote
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -124,6 +124,19 @@ export default function DashboardSidebar() {
 
       {/* Bottom */}
       <div className="px-3 pb-6 space-y-1 border-t border-glass-border pt-4">
+        {isAdmin && (
+          <Link href="/dashboard/admin/payouts" 
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
+              pathname === '/dashboard/admin/payouts' 
+                ? "bg-gold-500/15 text-gold-400 border border-gold-500/25 font-bold" 
+                : "text-gold-400/80 hover:text-gold-400 hover:bg-gold-500/10"
+            )}
+          >
+            <Banknote size={16} className="text-gold-400" />
+            Manage Payouts
+          </Link>
+        )}
         <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink-muted hover:text-ink hover:bg-glass transition-all">
           <Settings size={16} className="text-ink-subtle" />
           Settings
