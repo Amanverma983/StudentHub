@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { 
   User, Mail, Shield, Smartphone, Bell, ChevronRight, Zap, 
@@ -14,8 +15,10 @@ import Button from '@/components/ui/Button';
 
 export default function SettingsPage() {
   const { user, profile, updateProfile, updateEmail, updatePassword, isWriter } = useAuth();
+  const router = useRouter();
   const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(null); // 'name', 'email', 'pass'
+  const [saving, setSaving] = useState(null); // 'name', 'email', 'pass', 'role'
+  const [isChangingRole, setIsChangingRole] = useState(false);
   const fileInputRef = useRef(null);
   const supabase = createClient();
 
@@ -95,6 +98,22 @@ export default function SettingsPage() {
     setIsEditingPass(false);
     setPasswords({ current: '', next: '', confirm: '' });
     setSaving(null);
+  };
+
+  const handleSwitchRole = async () => {
+    const newRole = isWriter ? 'customer' : 'writer';
+    setSaving('role');
+    try {
+      await updateProfile({ role: newRole });
+      toast.success(`Switched to ${newRole} mode!`);
+      // Redirect to dashboard to refresh layout
+      router.push('/dashboard');
+    } catch (err) {
+      toast.error('Failed to switch role');
+    } finally {
+      setSaving(null);
+      setIsChangingRole(false);
+    }
   };
 
   const initials = profile?.name
@@ -230,19 +249,49 @@ export default function SettingsPage() {
             </div>
 
             {/* Role Item */}
-            <div className="px-8 py-5 flex items-center justify-between hover:bg-glass/30 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-gold-500/10 flex items-center justify-center border border-gold-500/20">
-                  <Shield size={18} className="text-gold-400" />
+            <div className="px-8 py-5 flex flex-col gap-4 hover:bg-glass/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-2xl bg-gold-500/10 flex items-center justify-center border border-gold-500/20">
+                    <Shield size={18} className="text-gold-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-ink-subtle uppercase tracking-widest mb-0.5">Account Type</p>
+                    <p className={isWriter ? 'text-sm font-bold text-gold-400 uppercase tracking-wider' : 'text-sm font-bold text-violet-400 uppercase tracking-wider'}>
+                      {isWriter ? '✦ Writer' : '◈ Customer'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-ink-subtle uppercase tracking-widest mb-0.5">Account Type</p>
-                  <p className={isWriter ? 'text-sm font-bold text-gold-400 uppercase tracking-wider' : 'text-sm font-bold text-violet-400 uppercase tracking-wider'}>
-                    {isWriter ? '✦ Writer' : '◈ Customer'}
-                  </p>
-                </div>
+                {!isChangingRole && (
+                  <button 
+                    onClick={() => setIsChangingRole(true)}
+                    className="btn-secondary py-1.5 px-4 text-xs font-bold border-gold-500/10 text-gold-400/80 hover:bg-gold-500/5 transition-all"
+                  >
+                    Switch Role
+                  </button>
+                )}
               </div>
-              <Lock size={14} className="text-ink-subtle" />
+
+              {isChangingRole && (
+                <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="p-4 bg-void/50 rounded-2xl border border-gold-500/20 space-y-4">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gold-500/10 flex items-center justify-center shrink-0">
+                      <AlertCircle size={18} className="text-gold-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-ink">Change account type to {isWriter ? 'Customer' : 'Writer'}?</p>
+                      <p className="text-xs text-ink-muted mt-1">This will change your dashboard view and sidebar links.</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button onClick={() => setIsChangingRole(false)} className="px-4 py-2 text-xs font-semibold text-ink-muted">Cancel</button>
+                    <button onClick={handleSwitchRole} disabled={saving === 'role'} className="btn-primary py-2 px-6 text-xs bg-gold-600 hover:bg-gold-500 border-none flex items-center gap-2">
+                       {saving === 'role' ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                       Confirm Switch
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </div>
         </div>
