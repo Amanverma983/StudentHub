@@ -8,7 +8,7 @@ import {
   Zap, PenTool, FileText, Globe, ChevronRight,
   IndianRupee, CheckCircle, Timer, Award, Check,
   X, Truck, Paperclip, MapPin, ExternalLink, Users,
-  ShieldCheck, AlertTriangle, Eye, ThumbsUp, ThumbsDown
+  ShieldCheck, AlertTriangle, Eye, ThumbsUp, ThumbsDown, Sparkles, Layers
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
