@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketplace } from '@/context/MarketplaceContext';
-import { formatCurrency, timeAgo, SUBJECTS, calculateGigPrice, RATES, DELIVERY_RATES } from '@/lib/utils';
+import { formatCurrency, timeAgo, SUBJECTS, calculateGigPrice, DELIVERY_RATES } from '@/lib/utils';
 import { createClient } from '@/lib/supabase';
 import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
@@ -335,7 +335,7 @@ function PostGigModal({ onClose, onSubmit }) {
 
           {/* Delivery Address */}
           <div>
-            <label className="block text-xs font-semibold text-link-muted uppercase tracking-widest mb-2 flex items-center gap-2">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-widest mb-2 flex items-center gap-2">
               <MapPin size={13} className="text-violet-400" />
               {form.delivery_type === 'digital' ? 'Delivery Details (Email/WhatsApp)' : 'Physical Delivery Address'} (Visible only to assigned writer)
             </label>
