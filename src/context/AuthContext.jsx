@@ -146,6 +146,16 @@ export function AuthProvider({ children }) {
 
   const updateProfile = useCallback(async (updates) => {
     if (!user) return;
+    
+    // 1. Optimistic Update (Instant UI Response)
+    const newProfile = { ...profile, ...updates };
+    setProfile(newProfile);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sh_profile', JSON.stringify(newProfile));
+    }
+
+    // 2. Background Sync
     try {
       const { error } = await supabase
         .from('profiles')
@@ -153,12 +163,12 @@ export function AuthProvider({ children }) {
         .eq('id', user.id);
 
       if (error) throw error;
-      setProfile(prev => ({ ...prev, ...updates }));
-      toast.success('Profile updated');
+      toast.success('Profile synced');
     } catch (err) {
-      toast.error(err.message);
+      toast.error('Sync error: ' + err.message);
+      // Optional: setProfile(oldProfile) if rollback is needed
     }
-  }, [user]);
+  }, [user, profile]);
 
   const updateEmail = useCallback(async (newEmail) => {
     try {

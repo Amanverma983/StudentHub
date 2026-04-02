@@ -103,19 +103,16 @@ export default function SettingsPage() {
   const handleSwitchRole = async () => {
     const newRole = isWriter ? 'customer' : 'writer';
     setSaving('role');
-    try {
-      await updateProfile({ role: newRole });
-      toast.success(`Switched to ${newRole} mode!`);
-      // Give context a moment to settle before redirect
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 100);
-    } catch (err) {
-      toast.error('Failed to switch role');
-    } finally {
-      setSaving(null);
-      setIsChangingRole(false);
-    }
+    
+    // 1. Optimistic Update (UI changes instantly)
+    updateProfile({ role: newRole });
+    
+    // 2. Close Modal & Redirect Instantly
+    setIsChangingRole(false);
+    toast.success(`Switching to ${newRole} mode...`);
+    router.push('/dashboard');
+    
+    setSaving(null);
   };
 
   const initials = profile?.name
