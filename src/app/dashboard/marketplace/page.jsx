@@ -238,7 +238,8 @@ function PostGigModal({ onClose, onSubmit }) {
       setShowUPIModal(false);
       onClose();
     } catch (err) {
-      toast.error('Submission failed after payment');
+      toast.error('Submission failed: ' + err.message);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -564,8 +565,8 @@ export default function MarketplacePage() {
     g.subject?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handlePostGig = (gigData) => {
-    postGig(gigData, user);
+  const handlePostGig = async (gigData) => {
+    return await postGig(gigData, user);
   };
 
   return (

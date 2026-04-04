@@ -129,8 +129,8 @@ export function MarketplaceProvider({ children }) {
       fetchGigs();
       return data;
     } catch (err) {
-      toast.error('Failed to post assignment');
-      console.error(err);
+      toast.error('Failed to post assignment: ' + (err.details || err.message || 'Unknown error'));
+      console.error('DATABASE ERROR:', err);
       return null;
     }
   }, [fetchGigs]);
