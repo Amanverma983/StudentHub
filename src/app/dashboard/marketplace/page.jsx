@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Filter, Clock, Users, Zap, X, Plus,
@@ -142,7 +142,7 @@ function GigCard({ gig, onApply, hasApplied, isWriter }) {
 // POST GIG MODAL
 function PostGigModal({ onClose, onSubmit }) {
   const { user, profile } = useAuth();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [loading, setLoading] = useState(false);
   const [showUPIModal, setShowUPIModal] = useState(false);
   
@@ -175,7 +175,7 @@ function PostGigModal({ onClose, onSubmit }) {
   const handleUpload = async (file) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `assignments/${user.id}/${fileName}`;
+    const filePath = `assignments/${user?.id || 'temp'}/${fileName}`;
 
     let { error: uploadError } = await supabase.storage
       .from('assignment-attachments')
@@ -535,6 +535,7 @@ function PostGigModal({ onClose, onSubmit }) {
       <AnimatePresence>
         {showUPIModal && (
           <UPIPaymentModal
+            key="upi-payment-modal"
             amount={pricing.total}
             gigTitle={form.title}
             onClose={() => setShowUPIModal(false)}
@@ -554,8 +555,9 @@ export default function MarketplacePage() {
   const [showPost, setShowPost] = useState(false);
 
   const displayedGigs = filteredGigs.filter(g =>
-    !search || g.title.toLowerCase().includes(search.toLowerCase()) ||
-    g.subject.toLowerCase().includes(search.toLowerCase())
+    !search || 
+    g.title?.toLowerCase().includes(search.toLowerCase()) ||
+    g.subject?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handlePostGig = (gigData) => {
@@ -662,6 +664,7 @@ export default function MarketplacePage() {
       <AnimatePresence>
         {showPost && (
           <PostGigModal
+            key="post-gig-modal"
             onClose={() => setShowPost(false)}
             onSubmit={handlePostGig}
           />
