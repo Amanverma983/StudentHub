@@ -43,12 +43,47 @@ export function AuthProvider({ children }) {
       isFetching.current = true;
       
       try {
+        console.log('🔄 Fetching profile for:', userId);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .single();
         
+        // PGRST116 is code for "no rows found"
+        if (profileError && profileError.code === 'PGRST116') {
+          console.warn('⚠️ Profile missing! Attempting self-healing...');
+          
+          // Get user metadata for the new profile
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const name = authUser?.user_metadata?.name || authUser?.email?.split('@')[0] || 'User';
+          const role = authUser?.user_metadata?.role || 'customer';
+
+          const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert([{ 
+              id: userId, 
+              name: name,
+              email: authUser?.email,
+              role: role 
+            }])
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('❌ Profile creation failed:', insertError);
+            toast.error('Could not create your profile');
+            throw insertError;
+          }
+
+          toast.success('Profile restored!');
+          setProfile(newProfile);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('sh_profile', JSON.stringify(newProfile));
+          }
+          return;
+        }
+
         if (profileError) throw profileError;
         
         setProfile(profileData);
@@ -57,6 +92,7 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
+        toast.error('Profile loading failed: ' + err.message);
       } finally {
         isFetching.current = false;
         setLoading(false);
