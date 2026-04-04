@@ -777,7 +777,7 @@ export default function ResumePage() {
                     <>Watch Ad (Free Temp Unlock)</>
                   )}
                   {adTimeLeft > 0 && (
-                    <div className="absolute bottom-0 left-0 h-1 bg-amber-400 transition-all duration-1000 ease-linear" style={{ width: \`\${(adTimeLeft / 15) * 100}%\` }} />
+                    <div className="absolute bottom-0 left-0 h-1 bg-amber-400 transition-all duration-1000 ease-linear" style={{ width: `${(adTimeLeft / 15) * 100}%` }} />
                   )}
                 </Button>
               </div>
