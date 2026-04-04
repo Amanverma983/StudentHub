@@ -6,7 +6,7 @@ import { Globe, Palette, Eye, Check, Plus, Trash2, ExternalLink,
   Github, Twitter, Linkedin, Mail, Code, Layers, Cpu,
   ChevronDown, ChevronUp, Monitor, Smartphone, Lock, Sparkles,
   Diamond, CreditCard, Upload, Camera, Loader2, Image as ImageIcon,
-  Copy, X, Star
+  Copy, X, Star, Zap
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
