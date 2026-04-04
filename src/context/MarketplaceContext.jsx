@@ -236,7 +236,8 @@ export function MarketplaceProvider({ children }) {
       toast.success('Application submitted!');
       fetchGigs();
     } catch (err) {
-      toast.error('already applied or error occurred');
+      toast.error('Application failed: ' + (err.message || 'Unknown error'));
+      console.error('APPLY ERROR:', err);
     }
   }, [fetchGigs]);
 
