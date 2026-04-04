@@ -39,7 +39,7 @@ export default function DashboardSidebar() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/');
+    window.location.href = '/';
   };
 
   return (

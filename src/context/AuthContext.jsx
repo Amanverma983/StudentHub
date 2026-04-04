@@ -134,13 +134,24 @@ export function AuthProvider({ children }) {
 
   const signOut = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
+      // 1. Clear local state and cache immediately (Optimistic UI)
       setUser(null);
       setProfile(null);
-      if (typeof window !== 'undefined') localStorage.removeItem('sh_profile');
-      toast.success('Signed out');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('sh_profile');
+        // Clear all session storage as well
+        sessionStorage.clear();
+      }
+      
+      // 2. Background signout from Supabase
+      await supabase.auth.signOut();
+      
+      toast.success('Signed out successfully');
     } catch (err) {
       console.error('Sign out error:', err);
+      // Even if server call fails, we ensure the local state is cleared
+      setUser(null);
+      setProfile(null);
     }
   }, []);
 
