@@ -167,8 +167,8 @@ export default function UPIPaymentModal({ amount, gigTitle, note, onClose, onPay
         )}
 
         {/* Upload Section */}
-        <div className={`pt-8 border-t border-glass-border space-y-5 ${isCouponApplied ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
-           <div>
+        <div className="pt-8 border-t border-glass-border space-y-5">
+           <div className={`${isCouponApplied ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
             <label className="block text-[10px] font-bold text-ink-muted uppercase tracking-widest mb-2">Upload Payment Screenshot</label>
             <div className="relative group/upload">
               <input 
@@ -176,7 +176,7 @@ export default function UPIPaymentModal({ amount, gigTitle, note, onClose, onPay
                 className="hidden" 
                 id="proof-upload" 
                 accept="image/*"
-                onChange={e => setProof(e.target.files[0])}
+                onChange={e => setProof(e.target.files?.[0])}
               />
               <label 
                 htmlFor="proof-upload"
@@ -196,7 +196,7 @@ export default function UPIPaymentModal({ amount, gigTitle, note, onClose, onPay
             </div>
           </div>
 
-          <div>
+          <div className={`${isCouponApplied ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
             <label className="block text-[10px] font-bold text-ink-muted uppercase tracking-widest mb-2">Transaction/Ref ID</label>
             <input 
               className="input-field py-4 font-mono font-bold tracking-widest" 
