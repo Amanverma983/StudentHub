@@ -126,7 +126,7 @@ function GigCard({ gig, onApply, hasApplied, isWriter }) {
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => onApply(gig.id)}
+                onClick={() => onApply(gig.id, user?.id)}
                 className="text-xs"
               >
                 Apply Now
