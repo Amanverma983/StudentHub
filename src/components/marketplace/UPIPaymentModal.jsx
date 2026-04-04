@@ -56,23 +56,23 @@ export default function UPIPaymentModal({ amount, gigTitle, note, onClose, onPay
   };
 
   const handleSubmitProof = async () => {
-    if (isCouponApplied) {
-      setIsUploading(true);
-      onPaymentComplete('FREE_COUPON', 'FREEHUB-' + Date.now(), 'FREEHUB');
-      return;
-    }
-
-    if (!proof) return toast.error('Please upload payment screenshot');
-    if (!transactionId) return toast.error('Please enter Transaction ID');
-
     setIsUploading(true);
     try {
+      if (isCouponApplied) {
+        await onPaymentComplete('FREE_COUPON', 'FREEHUB-' + Date.now(), 'FREEHUB');
+        return;
+      }
+
+      if (!proof) return toast.error('Please upload payment screenshot');
+      if (!transactionId) return toast.error('Please enter Transaction ID');
+
       const publicUrl = await uploadPaymentProof(proof);
       if (publicUrl) {
-        onPaymentComplete(publicUrl, transactionId);
+        await onPaymentComplete(publicUrl, transactionId);
       }
     } catch (err) {
       console.error(err);
+      toast.error('Failed to complete action');
     } finally {
       setIsUploading(false);
     }

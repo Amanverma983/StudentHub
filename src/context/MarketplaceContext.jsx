@@ -74,7 +74,7 @@ export function MarketplaceProvider({ children }) {
       return null;
     }
     try {
-      const isFree = gigData.price === 0 && gigData.coupon_used;
+      const isFree = Number(gigData.price) === 0 && gigData.coupon_used === 'FREEHUB';
 
       const { data, error } = await supabase
         .from('gigs')

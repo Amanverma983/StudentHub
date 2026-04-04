@@ -211,7 +211,7 @@ function PostGigModal({ onClose, onSubmit }) {
     }
   };
 
-  const handlePaymentSuccess = async (proofUrl, transactionId) => {
+  const handlePaymentSuccess = async (proofUrl, transactionId, couponUsed) => {
     setLoading(true);
     try {
       // 2. Upload Assignment File if exists (Logic moved here)
@@ -221,17 +221,18 @@ function PostGigModal({ onClose, onSubmit }) {
       }
 
       // 3. Post to Database with Payment Info
+      const isFree = couponUsed === 'FREEHUB';
       await onSubmit({ 
         ...form, 
-        price: pricing.total,
-        base_price: pricing.base,
-        delivery_charge: pricing.deliveryCharge,
-        service_fee: pricing.serviceFee,
+        price: isFree ? 0 : pricing.total,
+        base_price: isFree ? 0 : pricing.base,
+        delivery_charge: isFree ? 0 : pricing.deliveryCharge,
+        service_fee: isFree ? 0 : pricing.serviceFee,
         attachment_url: attachmentUrl,
         delivery_type: form.delivery_type,
         payment_proof_url: proofUrl,
         transaction_id: transactionId,
-        coupon_used: arguments[2] || null
+        coupon_used: couponUsed || null
       });
 
       setShowUPIModal(false);
