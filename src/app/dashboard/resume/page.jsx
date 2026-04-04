@@ -9,6 +9,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
+import toast from 'react-hot-toast';
+import UPIPaymentModal from '@/components/marketplace/UPIPaymentModal';
+import { createClient } from '@/lib/supabase';
 
 const TEMPLATES = [
   {
@@ -110,14 +113,22 @@ const DEFAULT_RESUME = {
 };
 
 // RESUME PREVIEW COMPONENT
-function ResumePreview({ data, template }) {
+function ResumePreview({ data, template, isPremium }) {
   const accent = TEMPLATES.find(t => t.id === template)?.accent || '#7C3AED';
 
   return (
     <div
-      className="bg-white text-gray-900 rounded-2xl overflow-hidden shadow-2xl"
+      id="resume-preview-container"
+      className="bg-white text-gray-900 rounded-2xl overflow-hidden shadow-2xl relative"
       style={{ fontFamily: 'Georgia, serif', fontSize: '11px', lineHeight: '1.5' }}
     >
+      {!isPremium && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-50">
+          <div className="transform -rotate-45 text-black/10 text-6xl font-black whitespace-nowrap select-none tracking-widest uppercase">
+            Made with StudentHub
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div style={{ background: accent, padding: '24px 28px', color: 'white' }}>
         <h1 style={{ fontSize: '22px', fontWeight: '700', margin: '0 0 4px', fontFamily: 'Arial, sans-serif', letterSpacing: '-0.3px' }}>
@@ -279,11 +290,21 @@ function Section({ title, icon: Icon, children, defaultOpen = true }) {
 }
 
 export default function ResumePage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [resumeData, setResumeData] = useState(DEFAULT_RESUME);
   const [template, setTemplate] = useState('modern');
   const [activeTab, setActiveTab] = useState('edit');
   const [saving, setSaving] = useState(false);
+  
+  // Premium Features State
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showUPIModal, setShowUPIModal] = useState(false);
+  const [adTimeLeft, setAdTimeLeft] = useState(0);
+  const [isTempPremium, setIsTempPremium] = useState(false);
+  
+  const hasPermanentPremium = profile?.unlocked_themes?.includes('resume_premium');
+  const isPremium = hasPermanentPremium || isTempPremium;
+  const supabase = createClient();
 
   const update = (section, field, value) => {
     setResumeData(prev => ({
@@ -324,12 +345,68 @@ export default function ResumePage() {
   };
 
   const handleExport = () => {
-    // In production, use @react-pdf/renderer for PDF generation
     window.print();
+  };
+
+  const handleWatchAd = () => {
+    setAdTimeLeft(15);
+    const interval = setInterval(() => {
+      setAdTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsTempPremium(true);
+          setShowRemoveModal(false);
+          toast.success('Watermark removed for this session!');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handlePaymentSuccess = async (proofUrl, transactionId) => {
+    try {
+      const { error } = await supabase.from('theme_unlock_requests').insert([{
+        user_id: user.id,
+        theme_id: 'resume_premium',
+        amount: 29,
+        payment_proof_url: proofUrl,
+        transaction_id: transactionId,
+        status: 'pending'
+      }]);
+      if (error) throw error;
+      
+      toast.success('Payment submitted! Admin will permanently unlock this feature shortly.');
+      setShowUPIModal(false);
+      setShowRemoveModal(false);
+    } catch (err) {
+      toast.error('Failed to submit proof');
+    }
   };
 
   return (
     <div className="space-y-6">
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #resume-preview-container, #resume-preview-container * {
+            visibility: visible !important;
+          }
+          #resume-preview-container {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+          }
+          @page { margin: 0; }
+        }
+      `}} />
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -337,13 +414,16 @@ export default function ResumePage() {
           <p className="text-sm text-ink-muted mt-1">ATS-optimized templates with real-time preview</p>
         </div>
         <div className="flex gap-3">
+          {!isPremium && (
+            <Button variant="ghost" size="sm" onClick={() => setShowRemoveModal(true)} className="text-gold-400 hover:text-gold-300">
+              <Zap size={14} /> Remove Watermark
+            </Button>
+          )}
           <Button variant="secondary" size="sm" onClick={handleSave} loading={saving}>
-            <Check size={14} />
-            Save
+            <Check size={14} /> Save
           </Button>
           <Button variant="gold" size="sm" onClick={handleExport}>
-            <Download size={14} />
-            Export PDF
+            <Download size={14} /> Export PDF
           </Button>
         </div>
       </div>
@@ -641,13 +721,78 @@ export default function ResumePage() {
           >
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-ink-muted">A4 Preview — Actual PDF may vary slightly</p>
-              <Button variant="gold" size="sm" onClick={handleExport}>
-                <Download size={14} />
-                Export PDF
-              </Button>
+              <div className="flex gap-2">
+                {!isPremium && (
+                  <Button variant="secondary" size="sm" onClick={() => setShowRemoveModal(true)} className="text-gold-400 border-gold-400/20">
+                    <Zap size={14} /> Remove Watermark
+                  </Button>
+                )}
+                <Button variant="gold" size="sm" onClick={handleExport}>
+                  <Download size={14} />
+                  Export PDF
+                </Button>
+              </div>
             </div>
-            <ResumePreview data={resumeData} template={template} />
+            <ResumePreview data={resumeData} template={template} isPremium={isPremium} />
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showRemoveModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" onClick={() => setShowRemoveModal(false)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-sm glass-card rounded-3xl p-8 border border-glass-border shadow-2xl text-center">
+              <button onClick={() => setShowRemoveModal(false)} className="absolute top-4 right-4 text-ink-subtle hover:text-ink"><X size={20} /></button>
+              <div className="w-16 h-16 rounded-full bg-gold-400/20 flex items-center justify-center mx-auto mb-4 border border-gold-400/30">
+                <Zap size={24} className="text-gold-400" />
+              </div>
+              <h3 className="font-display text-2xl font-800 text-ink mb-2">Remove Watermark</h3>
+              <p className="text-sm text-ink-muted mb-6">Support us to export clean, professional resumes without our branding.</p>
+              
+              <div className="space-y-3">
+                <Button 
+                  variant="gold" 
+                  className="w-full justify-center" 
+                  onClick={() => { setShowRemoveModal(false); setShowUPIModal(true); }}
+                >
+                  Pay ₹29 (Permanent Unlock)
+                </Button>
+                
+                <div className="relative flex py-2 items-center">
+                  <div className="flex-grow border-t border-glass-border"></div>
+                  <span className="flex-shrink-0 mx-4 text-xs text-ink-subtle">or</span>
+                  <div className="flex-grow border-t border-glass-border"></div>
+                </div>
+
+                <Button 
+                  variant="secondary" 
+                  className="w-full justify-center relative overflow-hidden" 
+                  onClick={handleWatchAd} 
+                  disabled={adTimeLeft > 0}
+                >
+                  {adTimeLeft > 0 ? (
+                    <span className="text-amber-400 font-bold tracking-widest">{adTimeLeft}s remaining...</span>
+                  ) : (
+                    <>Watch Ad (Free Temp Unlock)</>
+                  )}
+                  {adTimeLeft > 0 && (
+                    <div className="absolute bottom-0 left-0 h-1 bg-amber-400 transition-all duration-1000 ease-linear" style={{ width: \`\${(adTimeLeft / 15) * 100}%\` }} />
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showUPIModal && (
+          <UPIPaymentModal
+            key="upi-resume"
+            amount={29}
+            gigTitle="Permanent Resume Watermark Removal"
+            onClose={() => setShowUPIModal(false)}
+            onPaymentComplete={handlePaymentSuccess}
+          />
         )}
       </AnimatePresence>
     </div>
