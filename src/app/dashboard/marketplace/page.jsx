@@ -160,13 +160,43 @@ function PostGigModal({ onClose, onSubmit }) {
     attachment: null,
   });
 
+  const [coupon, setCoupon] = useState('');
+  const [isCouponApplied, setIsCouponApplied] = useState(false);
+
+  const checkCoupon = () => {
+    if (coupon.toUpperCase() === 'FREEHUB') {
+      const used = profile?.used_coupons || [];
+      if (used.includes('FREEHUB')) {
+        toast.error('You have already used this coupon!');
+        setIsCouponApplied(false);
+      } else {
+        toast.success('Coupon FREEHUB applied! Assignment is now FREE.');
+        setIsCouponApplied(true);
+      }
+    } else {
+      toast.error('Invalid coupon code');
+      setIsCouponApplied(false);
+    }
+  };
+
   useEffect(() => {
     if (profile?.phone) {
       setForm(prev => ({ ...prev, phone: profile.phone }));
     }
   }, [profile]);
 
-  const pricing = calculateGigPrice(form.pages, form.urgency, form.delivery_type);
+  const pricing = useMemo(() => {
+    const basePricing = calculateGigPrice(form.pages, form.urgency, form.delivery_type);
+    if (isCouponApplied) {
+      return { 
+        total: 0, 
+        base: 0, 
+        deliveryCharge: 0, 
+        serviceFee: 0 
+      };
+    }
+    return basePricing;
+  }, [form.pages, form.urgency, form.delivery_type, isCouponApplied]);
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -199,7 +229,13 @@ function PostGigModal({ onClose, onSubmit }) {
 
     setLoading(true);
     try {
-      // 1. Trigger UPI Payment Modal
+      // 1. If it's free, skip payment modal
+      if (pricing.total === 0 && isCouponApplied) {
+        await handlePaymentSuccess('FREE_COUPON', 'FREEHUB-' + Date.now());
+        return;
+      }
+
+      // 2. Trigger UPI Payment Modal
       setShowUPIModal(true);
       setLoading(false); // Stop main loading, modal will handle next steps
     } catch (err) {
@@ -228,7 +264,9 @@ function PostGigModal({ onClose, onSubmit }) {
         attachment_url: attachmentUrl,
         delivery_type: form.delivery_type,
         payment_proof_url: proofUrl,
-        transaction_id: transactionId
+        payment_proof_url: proofUrl,
+        transaction_id: transactionId,
+        coupon_used: isCouponApplied ? 'FREEHUB' : null
       });
 
       setShowUPIModal(false);
@@ -486,6 +524,36 @@ function PostGigModal({ onClose, onSubmit }) {
             />
           </div>
 
+          {/* Coupon Code Section */}
+          <div className="bg-violet-500/5 rounded-2xl p-5 border border-dashed border-violet-500/30">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-widest mb-3">
+              Apply Coupon Code
+            </label>
+            <div className="flex gap-2">
+              <input
+                className="input-field flex-1"
+                placeholder="Enter code (e.g. FREEHUB)"
+                value={coupon}
+                onChange={e => setCoupon(e.target.value)}
+                disabled={isCouponApplied}
+              />
+              <Button 
+                type="button" 
+                variant={isCouponApplied ? 'secondary' : 'primary'} 
+                size="sm"
+                onClick={checkCoupon}
+                disabled={isCouponApplied || !coupon}
+              >
+                {isCouponApplied ? <Check size={14} className="text-emerald-400" /> : 'Apply'}
+              </Button>
+            </div>
+            {isCouponApplied && (
+              <p className="text-[10px] text-emerald-400 font-bold mt-2 flex items-center gap-1 uppercase tracking-widest">
+                <Zap size={10} fill="currentColor" /> Discount Applied: 100% OFF
+              </p>
+            )}
+          </div>
+
           {/* Price Preview */}
           <div className="glass-strong rounded-2xl p-5 border border-gold-400/20 shadow-lg">
             <div className="flex justify-between items-center mb-4 pb-4 border-b border-glass-border">
@@ -521,7 +589,7 @@ function PostGigModal({ onClose, onSubmit }) {
             <Button variant="secondary" type="button" onClick={onClose} className="flex-1 justify-center">Cancel</Button>
             <Button variant="primary" type="submit" loading={loading} className="flex-1 justify-center gap-2">
               <Zap size={15} />
-              Pay & Post Assignment
+              {isCouponApplied ? 'Post Free Assignment' : 'Pay & Post Assignment'}
             </Button>
           </div>
 

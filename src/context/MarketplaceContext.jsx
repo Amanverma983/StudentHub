@@ -74,6 +74,8 @@ export function MarketplaceProvider({ children }) {
       return null;
     }
     try {
+      const isFree = gigData.price === 0 && gigData.coupon_used;
+
       const { data, error } = await supabase
         .from('gigs')
         .insert([{
@@ -85,12 +87,13 @@ export function MarketplaceProvider({ children }) {
           deadline: gigData.deadline,
           urgency: gigData.urgency,
           customer_id: currentUser.id,
-          tags: [gigData.subject, ...(gigData.attachment ? ['📎 Attachment'] : [])],
+          tags: [gigData.subject, ...(gigData.attachment ? ['📎 Attachment'] : []), ...(isFree ? ['🎁 Free Use'] : [])],
           question: gigData.question,
           attachment_url: gigData.attachment_url || null,
           delivery_address: gigData.delivery_address,
           delivery_type: gigData.delivery_type || 'national',
-          payment_status: 'pending_verification',
+          payment_status: isFree ? 'paid' : 'pending_verification',
+          status: isFree ? 'open' : 'open', // Always open for now, verify status later
           payment_proof_url: gigData.payment_proof_url || null,
           transaction_id: gigData.transaction_id || null,
           customer_phone: gigData.phone || null,
@@ -103,7 +106,26 @@ export function MarketplaceProvider({ children }) {
 
       if (error) throw error;
 
-      toast.success('Assignment submitted for verification!');
+      // Update used_coupons if applicable
+      if (isFree) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('used_coupons')
+          .eq('id', currentUser.id)
+          .single();
+        
+        const used = profile?.used_coupons || [];
+        if (!used.includes(gigData.coupon_used)) {
+          await supabase
+            .from('profiles')
+            .update({ used_coupons: [...used, gigData.coupon_used] })
+            .eq('id', currentUser.id);
+        }
+        toast.success('Assignment posted for free using coupon!');
+      } else {
+        toast.success('Assignment submitted for verification!');
+      }
+
       fetchGigs();
       return data;
     } catch (err) {

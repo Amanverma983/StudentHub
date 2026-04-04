@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Users, Banknote, IndianRupee, Clock, CheckCircle, 
+import {
+  Users, Banknote, IndianRupee, Clock, CheckCircle,
   ArrowUpRight, Wallet, History, AlertCircle, Info,
   Check, Smartphone, ExternalLink, Mail, User, ArrowRight,
   TrendingUp
@@ -107,17 +107,15 @@ export default function AdminPayoutsPage() {
         <div className="flex gap-2 p-1 bg-glass/20 rounded-2xl w-fit">
           <button
             onClick={() => setActiveTab('requests')}
-            className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'requests' ? 'bg-violet-600 text-white shadow-glow-sm' : 'text-ink-muted hover:text-ink'
-            }`}
+            className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'requests' ? 'bg-violet-600 text-white shadow-glow-sm' : 'text-ink-muted hover:text-ink'
+              }`}
           >
             Withdrawal Requests
           </button>
           <button
             onClick={() => setActiveTab('writers')}
-            className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'writers' ? 'bg-violet-600 text-white shadow-glow-sm' : 'text-ink-muted hover:text-ink'
-            }`}
+            className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'writers' ? 'bg-violet-600 text-white shadow-glow-sm' : 'text-ink-muted hover:text-ink'
+              }`}
           >
             Writers Ledger
           </button>
@@ -179,9 +177,8 @@ export default function AdminPayoutsPage() {
                             <p className="text-[10px] text-ink-subtle mt-1 uppercase tracking-widest font-black">UPI Payment</p>
                           </td>
                           <td className="px-8 py-6">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                              req.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-gold-500/15 text-gold-400'
-                            }`}>
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${req.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-gold-500/15 text-gold-400'
+                              }`}>
                               {req.status === 'completed' ? 'PAID' : 'PENDING'}
                             </span>
                           </td>

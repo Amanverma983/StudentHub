@@ -478,7 +478,7 @@ function AdminDashboard({ user }) {
                   id={gig.id}
                   title={gig.title}
                   amount={gig.price}
-                  user={gig.profiles?.name}
+                  user={gig.customerName || gig.customer?.name}
                   txnId={gig.transaction_id}
                   proof={gig.payment_proof_url}
                   time={gig.created_at}
