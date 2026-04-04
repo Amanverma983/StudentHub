@@ -482,6 +482,11 @@ export default function PortfolioPage() {
   const [showUPIModal, setShowUPIModal] = useState(false);
   const [upiModalData, setUpiModalData] = useState({ amount: 0, note: '', themeId: '' });
 
+  // Watermark Freemium State
+  const [isTempPremium, setIsTempPremium] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [adTimeLeft, setAdTimeLeft] = useState(0);
+
   // Sync unlocked themes
   useEffect(() => {
     if (user?.unlocked_themes) setUnlockedThemes(user.unlocked_themes);
@@ -616,13 +621,34 @@ export default function Portfolio() {
 
       if (error) throw error;
       
-      toast.success('Payment proof submitted! Admin will unlock this theme shortly.');
+      toast.success(
+        upiModalData.themeId === 'portfolio_premium' 
+          ? 'Payment submitted! Admin will permanently remove watermarks shortly.' 
+          : 'Payment proof submitted! Admin will unlock this theme shortly.'
+      );
       setShowUPIModal(false);
+      setShowRemoveModal(false);
     } catch (err) {
       toast.error('Failed to submit proof');
     } finally {
       setUnlocking(false);
     }
+  };
+
+  const handleWatchAd = () => {
+    setAdTimeLeft(15);
+    const interval = setInterval(() => {
+      setAdTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsTempPremium(true);
+          setShowRemoveModal(false);
+          toast.success('Watermark removed for this session!');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const addSkill = () => {
@@ -645,7 +671,13 @@ export default function Portfolio() {
   const removeProject = (id) => update('projects', data.projects.filter(p => p.id !== id));
 
   const PreviewComponent = PREVIEW_COMPONENTS[theme];
-  const isCurrentlyLocked = THEMES.find(t => t.id === theme)?.premium && !unlockedThemes.includes(theme);
+  const currentThemeData = THEMES.find(t => t.id === theme);
+  const isCurrentlyLocked = currentThemeData?.premium && !unlockedThemes.includes(theme);
+
+  // Watermark Logic
+  const hasPortfolioPremium = unlockedThemes.includes('portfolio_premium');
+  const isPremium = hasPortfolioPremium || isTempPremium;
+  const showWatermark = !currentThemeData?.premium && !isPremium;
 
   return (
     <div className="space-y-6">
@@ -656,6 +688,12 @@ export default function Portfolio() {
           <p className="text-sm text-ink-muted mt-1">Build a stunning personal website — no code required</p>
         </div>
         <div className="flex gap-3">
+          {showWatermark && (
+            <Button variant="ghost" className="text-gold-400 hover:text-gold-300 hidden md:flex" onClick={() => setShowRemoveModal(true)}>
+              <Zap size={15} />
+              Remove Watermark
+            </Button>
+          )}
           <Button variant="secondary" onClick={handleExportCode}>
             <Code size={15} />
             Export Code
@@ -906,17 +944,33 @@ export default function Portfolio() {
               <div className={`mx-auto transition-all duration-300 ${device === 'mobile' ? 'max-w-sm' : 'max-w-full'}`}>
                 <div className="glass-card rounded-3xl overflow-hidden border border-glass-border relative group">
                   {/* Browser chrome */}
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-glass-border bg-void/20">
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                      <div className="w-3 h-3 rounded-full bg-gold-500/60" />
-                      <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
-                    </div>
-                    <div className="flex-1 mx-4 px-3 py-1 bg-glass rounded-lg text-xs text-ink-subtle font-mono text-center truncate">
-                      studenthub.in/{data.name.toLowerCase().replace(/\s+/g, '')}
+                  <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-glass-border bg-void/20">
+                    <div className="flex items-center gap-2 w-full max-w-full">
+                      <div className="flex gap-1.5 shrink-0">
+                        <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                        <div className="w-3 h-3 rounded-full bg-gold-500/60" />
+                        <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
+                      </div>
+                      <div className="flex-1 mx-4 px-3 py-1 bg-glass rounded-lg text-xs text-ink-subtle font-mono text-center truncate">
+                        studenthub.in/{data.name.toLowerCase().replace(/\s+/g, '')}
+                      </div>
+                      {showWatermark && (
+                        <button onClick={() => setShowRemoveModal(true)} className="shrink-0 text-gold-400 hover:text-gold-300 md:hidden bg-gold-500/10 p-1.5 rounded-md" title="Remove Watermark">
+                          <Zap size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
                   
+                  {/* Watermark Overlay for Free Themes */}
+                  {showWatermark && (
+                    <div className="absolute inset-0 z-[40] pointer-events-none flex items-center justify-center overflow-hidden">
+                      <div className="transform -rotate-45 text-white/5 text-[min(8vw,4rem)] font-black whitespace-nowrap select-none tracking-widest uppercase mix-blend-overlay">
+                        Made with StudentHub
+                      </div>
+                    </div>
+                  )}
+
                   {/* Watermark Overlay for Locked Themes */}
                   {isCurrentlyLocked && (
                     <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
@@ -983,6 +1037,56 @@ export default function Portfolio() {
       </AnimatePresence>
       {/* Portfolio Share Modal */}
       <AnimatePresence>
+        {showRemoveModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" onClick={() => setShowRemoveModal(false)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-sm glass-card rounded-3xl p-8 border border-glass-border shadow-2xl text-center">
+              <button onClick={() => setShowRemoveModal(false)} className="absolute top-4 right-4 text-ink-subtle hover:text-ink"><X size={20} /></button>
+              <div className="w-16 h-16 rounded-full bg-gold-400/20 flex items-center justify-center mx-auto mb-4 border border-gold-400/30">
+                <Zap size={24} className="text-gold-400" />
+              </div>
+              <h3 className="font-display text-2xl font-800 text-ink mb-2">Remove Watermark</h3>
+              <p className="text-sm text-ink-muted mb-6">Support us to publish clean portfolios without our branding across all your free themes!</p>
+              
+              <div className="space-y-3">
+                <Button 
+                  variant="gold" 
+                  className="w-full justify-center" 
+                  onClick={() => { 
+                    setShowRemoveModal(false); 
+                    setUpiModalData({ amount: 29, note: 'Permanent Portfolio Watermark Removal', themeId: 'portfolio_premium' });
+                    setShowUPIModal(true); 
+                  }}
+                >
+                  Pay ₹29 (Permanent Unlock)
+                </Button>
+                
+                <div className="relative flex py-2 items-center">
+                  <div className="flex-grow border-t border-glass-border"></div>
+                  <span className="flex-shrink-0 mx-4 text-xs text-ink-subtle">or</span>
+                  <div className="flex-grow border-t border-glass-border"></div>
+                </div>
+
+                <Button 
+                  variant="secondary" 
+                  className="w-full justify-center relative overflow-hidden" 
+                  onClick={handleWatchAd} 
+                  disabled={adTimeLeft > 0}
+                >
+                  {adTimeLeft > 0 ? (
+                    <span className="text-amber-400 font-bold tracking-widest">{adTimeLeft}s remaining...</span>
+                  ) : (
+                    <>Watch Ad (Free Temp Unlock)</>
+                  )}
+                  {adTimeLeft > 0 && (
+                    <div className="absolute bottom-0 left-0 h-1 bg-amber-400 transition-all duration-1000 ease-linear" style={{ width: `${(adTimeLeft / 15) * 100}%` }} />
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {showUPIModal && (
           <UPIPaymentModal
             amount={upiModalData.amount}
