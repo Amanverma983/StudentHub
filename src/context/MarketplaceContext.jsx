@@ -104,32 +104,38 @@ export function MarketplaceProvider({ children }) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('INSERT ERROR:', error);
+        throw error;
+      }
 
       // Update used_coupons if applicable
       if (isFree) {
-        const { data: profile } = await supabase
+        console.log('MARKING COUPON AS USED...');
+        const { data: profile, error: fetchError } = await supabase
           .from('profiles')
           .select('used_coupons')
           .eq('id', currentUser.id)
           .single();
         
+        if (fetchError) console.error('PROFILE FETCH ERROR:', fetchError);
+        
         const used = profile?.used_coupons || [];
         if (!used.includes(gigData.coupon_used)) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('profiles')
             .update({ used_coupons: [...used, gigData.coupon_used] })
             .eq('id', currentUser.id);
+          
+          if (updateError) console.error('PROFILE UPDATE ERROR:', updateError);
         }
-        toast.success('Assignment posted for free using coupon!');
-      } else {
-        toast.success('Assignment submitted for verification!');
       }
 
+      console.log('SUCCESSFULLY POSTED GIG');
       fetchGigs();
       return data;
     } catch (err) {
-      toast.error('Failed to post assignment: ' + (err.details || err.message || 'Unknown error'));
+      toast.error('Failed: ' + (err.details || err.message || 'Unknown error'));
       console.error('DATABASE ERROR:', err);
       return null;
     }

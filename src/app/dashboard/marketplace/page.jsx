@@ -221,6 +221,7 @@ function PostGigModal({ onClose, onSubmit }) {
       }
 
       // 3. Post to Database with Payment Info
+      toast.loading('Saving assignment details...', { id: 'post-progress' });
       const isFree = couponUsed === 'FREEHUB';
       await onSubmit({ 
         ...form, 
@@ -235,10 +236,11 @@ function PostGigModal({ onClose, onSubmit }) {
         coupon_used: couponUsed || null
       });
 
+      toast.success('Assignment posted!', { id: 'post-progress' });
       setShowUPIModal(false);
       onClose();
     } catch (err) {
-      toast.error('Submission failed: ' + err.message);
+      toast.error('Submission failed: ' + err.message, { id: 'post-progress' });
       console.error(err);
     } finally {
       setLoading(false);
